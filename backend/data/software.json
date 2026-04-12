@@ -1,0 +1,152 @@
+[
+  {
+    "id": 1, "name": "Microsoft Word", "cat": "Office", "icon": "📝",
+    "min": {"cpu": 1000, "ram": 4, "vram": 0, "disk": 4},
+    "rec": {"cpu": 2000, "ram": 8, "vram": 0, "disk": 10}
+  },
+  {
+    "id": 2, "name": "Microsoft Excel", "cat": "Office", "icon": "📊",
+    "min": {"cpu": 1000, "ram": 4, "vram": 0, "disk": 4},
+    "rec": {"cpu": 2000, "ram": 8, "vram": 0, "disk": 10}
+  },
+  {
+    "id": 3, "name": "Microsoft PowerPoint", "cat": "Office", "icon": "📑",
+    "min": {"cpu": 1000, "ram": 4, "vram": 0, "disk": 4},
+    "rec": {"cpu": 2000, "ram": 8, "vram": 0, "disk": 10}
+  },
+  {
+    "id": 4, "name": "Adobe Photoshop", "cat": "Creative", "icon": "🎨",
+    "min": {"cpu": 2000, "ram": 8, "vram": 2, "disk": 20},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 4, "disk": 50}
+  },
+  {
+    "id": 5, "name": "Adobe Premiere Pro", "cat": "Creative", "icon": "🎬",
+    "min": {"cpu": 3000, "ram": 16, "vram": 4, "disk": 50},
+    "rec": {"cpu": 4000, "ram": 32, "vram": 8, "disk": 100}
+  },
+  {
+    "id": 6, "name": "Adobe After Effects", "cat": "Creative", "icon": "✨",
+    "min": {"cpu": 3000, "ram": 16, "vram": 4, "disk": 50},
+    "rec": {"cpu": 4000, "ram": 32, "vram": 8, "disk": 100}
+  },
+  {
+    "id": 7, "name": "Blender", "cat": "Creative", "icon": "🌀",
+    "min": {"cpu": 2000, "ram": 8, "vram": 2, "disk": 20},
+    "rec": {"cpu": 4000, "ram": 32, "vram": 8, "disk": 50}
+  },
+  {
+    "id": 8, "name": "Visual Studio Code", "cat": "Dev", "icon": "💻",
+    "min": {"cpu": 1000, "ram": 2, "vram": 0, "disk": 2},
+    "rec": {"cpu": 2000, "ram": 8, "vram": 0, "disk": 10}
+  },
+  {
+    "id": 9, "name": "Android Studio", "cat": "Dev", "icon": "📱",
+    "min": {"cpu": 2000, "ram": 8, "vram": 0, "disk": 30},
+    "rec": {"cpu": 3000, "ram": 16, "vram": 0, "disk": 60}
+  },
+  {
+    "id": 10, "name": "Unity", "cat": "Dev", "icon": "🎮",
+    "min": {"cpu": 2000, "ram": 8, "vram": 2, "disk": 20},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 4, "disk": 50}
+  },
+  {
+    "id": 11, "name": "Zoom", "cat": "Communication", "icon": "📹",
+    "min": {"cpu": 1000, "ram": 4, "vram": 0, "disk": 5},
+    "rec": {"cpu": 2000, "ram": 8, "vram": 0, "disk": 10}
+  },
+  {
+    "id": 12, "name": "Google Chrome", "cat": "Browser", "icon": "🌐",
+    "min": {"cpu": 1000, "ram": 4, "vram": 0, "disk": 5},
+    "rec": {"cpu": 2000, "ram": 8, "vram": 0, "disk": 20}
+  },
+  {
+    "id": 13, "name": "Minecraft Java", "cat": "Game", "icon": "⛏️",
+    "min": {"cpu": 2000, "ram": 8, "vram": 1, "disk": 10},
+    "rec": {"cpu": 3000, "ram": 16, "vram": 4, "disk": 30}
+  },
+  {
+    "id": 14, "name": "Valorant", "cat": "Game", "icon": "🔫",
+    "min": {"cpu": 2000, "ram": 4, "vram": 1, "disk": 35},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 4, "disk": 35}
+  },
+  {
+    "id": 15, "name": "CS2", "cat": "Game", "icon": "💣",
+    "min": {"cpu": 2000, "ram": 8, "vram": 1, "disk": 60},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 4, "disk": 60}
+  },
+  {
+    "id": 16, "name": "GTA V", "cat": "Game", "icon": "🚗",
+    "min": {"cpu": 2000, "ram": 8, "vram": 2, "disk": 90},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 8, "disk": 90}
+  },
+  {
+    "id": 17, "name": "Cyberpunk 2077", "cat": "Game", "icon": "🤖",
+    "min": {"cpu": 3000, "ram": 8, "vram": 6, "disk": 70},
+    "rec": {"cpu": 4000, "ram": 16, "vram": 12, "disk": 70}
+  },
+  {
+    "id": 18, "name": "Fortnite", "cat": "Game", "icon": "🏗️",
+    "min": {"cpu": 2000, "ram": 8, "vram": 2, "disk": 30},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 8, "disk": 30}
+  },
+  {
+    "id": 19, "name": "League of Legends", "cat": "Game", "icon": "⚔️",
+    "min": {"cpu": 2000, "ram": 4, "vram": 1, "disk": 25},
+    "rec": {"cpu": 3000, "ram": 8, "vram": 4, "disk": 25}
+  },
+  {
+    "id": 20, "name": "Dota 2", "cat": "Game", "icon": "🧙",
+    "min": {"cpu": 2000, "ram": 4, "vram": 1, "disk": 20},
+    "rec": {"cpu": 3000, "ram": 8, "vram": 4, "disk": 20}
+  },
+  {
+    "id": 21, "name": "Red Dead Redemption 2", "cat": "Game", "icon": "🤠",
+    "min": {"cpu": 3000, "ram": 12, "vram": 4, "disk": 150},
+    "rec": {"cpu": 4000, "ram": 16, "vram": 8, "disk": 150}
+  },
+  {
+    "id": 22, "name": "Elden Ring", "cat": "Game", "icon": "💀",
+    "min": {"cpu": 3000, "ram": 12, "vram": 4, "disk": 60},
+    "rec": {"cpu": 4000, "ram": 16, "vram": 8, "disk": 60}
+  },
+  {
+    "id": 23, "name": "The Witcher 3", "cat": "Game", "icon": "🗡️",
+    "min": {"cpu": 2500, "ram": 8, "vram": 4, "disk": 50},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 8, "disk": 50}
+  },
+  {
+    "id": 24, "name": "DaVinci Resolve", "cat": "Creative", "icon": "🎞️",
+    "min": {"cpu": 3000, "ram": 16, "vram": 4, "disk": 50},
+    "rec": {"cpu": 4000, "ram": 32, "vram": 8, "disk": 100}
+  },
+  {
+    "id": 25, "name": "AutoCAD", "cat": "Engineering", "icon": "📐",
+    "min": {"cpu": 2500, "ram": 8, "vram": 1, "disk": 10},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 4, "disk": 20}
+  },
+  {
+    "id": 26, "name": "Figma", "cat": "Design", "icon": "🖼️",
+    "min": {"cpu": 1500, "ram": 4, "vram": 0, "disk": 5},
+    "rec": {"cpu": 2500, "ram": 8, "vram": 0, "disk": 10}
+  },
+  {
+    "id": 27, "name": "OBS Studio", "cat": "Streaming", "icon": "📡",
+    "min": {"cpu": 2000, "ram": 8, "vram": 2, "disk": 10},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 4, "disk": 30}
+  },
+  {
+    "id": 28, "name": "Overwatch 2", "cat": "Game", "icon": "🦸",
+    "min": {"cpu": 2500, "ram": 8, "vram": 2, "disk": 50},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 8, "disk": 50}
+  },
+  {
+    "id": 29, "name": "Apex Legends", "cat": "Game", "icon": "🎯",
+    "min": {"cpu": 2500, "ram": 8, "vram": 2, "disk": 56},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 4, "disk": 56}
+  },
+  {
+    "id": 30, "name": "PUBG", "cat": "Game", "icon": "🪖",
+    "min": {"cpu": 2500, "ram": 8, "vram": 2, "disk": 40},
+    "rec": {"cpu": 3500, "ram": 16, "vram": 4, "disk": 40}
+  }
+]
