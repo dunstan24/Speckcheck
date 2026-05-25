@@ -3,4 +3,8 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    host: '0.0.0.0',   // wajib agar Vite bisa diakses dari luar container
+    port: 5173,
+  }
 })

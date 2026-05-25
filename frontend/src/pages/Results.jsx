@@ -56,6 +56,37 @@ function Bar({ pct, color }) {
 function SoftwareCard({ sw }) {
   const [open, setOpen] = useState(false);
   const g = GRADE_INFO[sw.result.grade];
+
+  const renderSpecValue = (label, val, type) => {
+    if (type === 'user') {
+      if (label === 'CPU') return `${val} MHz`;
+      if (label === 'RAM') return `${val} GB`;
+      if (label === 'GPU') return `${val} GB VRAM`;
+      if (label === 'Storage') return `${val} GB`;
+      return val;
+    }
+    
+    // Tampilkan teks asli PCGamingWiki jika ada
+    if (sw.raw) {
+      if (label === 'CPU') {
+        const rawCpu = type === 'min' ? sw.raw.cpu_min : sw.raw.cpu_rec;
+        if (rawCpu && rawCpu !== "N/A") return rawCpu;
+      }
+      if (label === 'GPU') {
+        const rawGpu = type === 'min' ? sw.raw.gpu_min : sw.raw.gpu_rec;
+        if (rawGpu && rawGpu !== "N/A") return rawGpu;
+      }
+    }
+
+    // Fallback angka standard
+    if (val === 0) return 'N/A';
+    if (label === 'CPU') return `${val} MHz`;
+    if (label === 'RAM') return `${val} GB`;
+    if (label === 'GPU') return `${val} GB VRAM`;
+    if (label === 'Storage') return `${val} GB`;
+    return val;
+  };
+
   return (
     <div
       style={{
@@ -77,14 +108,31 @@ function SoftwareCard({ sw }) {
           userSelect: "none",
         }}
       >
-        <span style={{ fontSize: "1.5rem", flexShrink: 0 }}>{sw.icon}</span>
+        {sw.cover_image_url ? (
+          <img
+            src={sw.cover_image_url}
+            alt={sw.name}
+            style={{
+              width: 36,
+              height: 48,
+              objectFit: "cover",
+              borderRadius: 6,
+              border: "1px solid var(--border)",
+              flexShrink: 0,
+            }}
+          />
+        ) : (
+          <span style={{ fontSize: "1.5rem", flexShrink: 0, width: 36, textAlign: "center" }}>{sw.icon}</span>
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
               fontWeight: 600,
               fontSize: "0.9rem",
               marginBottom: 4,
-              truncate: true,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis"
             }}
           >
             {sw.name}
@@ -117,6 +165,40 @@ function SoftwareCard({ sw }) {
             animation: "fadeUp 0.2s ease",
           }}
         >
+          {/* Deskripsi & Link Wiki */}
+          {(sw.description || sw.url) && (
+            <div
+              style={{
+                background: "var(--bg3)",
+                borderRadius: 8,
+                padding: "12px",
+                marginBottom: "12px",
+                fontSize: "0.8rem",
+                color: "var(--text2)",
+                lineHeight: 1.5,
+              }}
+            >
+              {sw.description && <p style={{ margin: "0 0 8px 0" }}>{sw.description}</p>}
+              {sw.url && (
+                <a
+                  href={sw.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    color: "var(--accent)",
+                    textDecoration: "none",
+                    fontWeight: 600,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  Lihat di PCGamingWiki ↗
+                </a>
+              )}
+            </div>
+          )}
+
           <div
             style={{
               display: "inline-flex",
@@ -136,7 +218,7 @@ function SoftwareCard({ sw }) {
           </div>
 
           <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
+            style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}
           >
             {sw.result.details.map((d) => (
               <div
@@ -194,13 +276,17 @@ function SoftwareCard({ sw }) {
                 />
                 <div
                   style={{
-                    marginTop: 4,
+                    marginTop: 6,
                     fontSize: "0.7rem",
-                    color: "var(--text3)",
-                    fontFamily: "var(--font-mono)",
+                    color: "var(--text2)",
+                    lineHeight: 1.4,
                   }}
                 >
-                  Kamu: {d.user} · Min: {d.min} · Rec: {d.rec}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px 12px' }}>
+                    <span><strong>Kamu:</strong> <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text)' }}>{renderSpecValue(d.label, d.user, 'user')}</span></span>
+                    <span><strong>Min:</strong> <span style={{ color: 'var(--text3)' }}>{renderSpecValue(d.label, d.min, 'min')}</span></span>
+                    <span><strong>Rec:</strong> <span style={{ color: 'var(--text3)' }}>{renderSpecValue(d.label, d.rec, 'rec')}</span></span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -229,6 +315,7 @@ export default function Results() {
     disk: params.get("disk") || 0,
     cpuName: params.get("cpuName") || "Unknown CPU",
     gpuName: params.get("gpuName") || "Unknown GPU",
+    os: params.get("os") || "Unknown OS",
   });
 
   useEffect(() => {
@@ -237,18 +324,37 @@ export default function Results() {
       return;
     }
 
-    const localResults = analyzeSoftware(spec, softwareList);
-    const localStats = calculateStats(localResults);
-    setResults(localResults);
-    setStats(localStats);
-    setLoading(false);
-    fetchAI(localStats);
+    const loadData = async () => {
+      try {
+        const res = await fetch(`${API}/api/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(spec),
+        });
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
+        setResults(data.results);
+        setStats(data.stats);
+        setLoading(false);
+        fetchAI(data.stats, data.results);
+      } catch (err) {
+        console.error("Gagal load analisis dari API, fallback ke local", err);
+        // Fallback jika API bermasalah
+        const localResults = analyzeSoftware(spec, softwareList);
+        const localStats = calculateStats(localResults);
+        setResults(localResults);
+        setStats(localStats);
+        setLoading(false);
+        fetchAI(localStats, localResults);
+      }
+    };
+    
+    loadData();
   }, []);
 
-  const fetchAI = async (st) => {
+  const fetchAI = async (st, activeResults) => {
     setAiLoading(true);
     try {
-      const topGames = results.filter ? "" : "";
       const res = await fetch(`${API}/api/ai-summary`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -258,7 +364,7 @@ export default function Results() {
       setSummary(d.summary);
     } catch {
       setSummary(
-        "AI summary tidak tersedia. Pastikan ANTHROPIC_API_KEY sudah diisi di backend/.env",
+        "AI summary tidak tersedia. Pastikan GEMINI_API_KEY sudah diisi di backend/.env",
       );
     }
     setAiLoading(false);
@@ -321,6 +427,7 @@ export default function Results() {
             { label: "RAM", val: `${spec.ramGb}GB` },
             { label: "GPU", val: spec.gpuName },
             { label: "Storage", val: `${spec.diskFree}GB` },
+            { label: "OS", val: spec.os },
           ].map(({ label, val }) => (
             <span
               key={label}

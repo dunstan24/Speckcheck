@@ -8,6 +8,7 @@ export function normalizeSpec(spec) {
     gpuName: spec.gpuName || "Unknown GPU",
     ramGb: Number(spec.ram) || 0,
     diskFree: Number(spec.disk) || 0,
+    os: spec.os || "Unknown OS",
   };
 }
 
