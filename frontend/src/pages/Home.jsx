@@ -1,184 +1,239 @@
-import { useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
+const GRADE_DEFS = [
+  { grade: 'S', label: 'Sangat Optimal', desc: 'Semua komponen melebihi rekomendasi', color: '#e5b842', bg: 'rgba(229,184,66,0.06)' },
+  { grade: 'A', label: 'Direkomendasikan', desc: 'Memenuhi spesifikasi rekomendasi', color: '#10b981', bg: 'rgba(16,185,129,0.06)' },
+  { grade: 'B', label: 'Bisa (Minimum)', desc: 'Memenuhi spesifikasi minimum', color: '#f59e0b', bg: 'rgba(245,158,11,0.06)' },
+  { grade: 'C', label: 'Di Bawah Minimum', desc: 'Beberapa komponen kurang memadai', color: '#f97316', bg: 'rgba(249,115,22,0.06)' },
+  { grade: 'D', label: 'Tidak Bisa', desc: 'Tidak memenuhi syarat minimum', color: '#ef4444', bg: 'rgba(239,68,68,0.06)' },
+]
+
 export default function Home() {
   const nav = useNavigate()
-  const [downloading, setDownloading] = useState(false)
+  const [gameCount, setGameCount] = useState(null)
+  const [featuredGames, setFeaturedGames] = useState([])
+  const [loadingFeatured, setLoadingFeatured] = useState(true)
 
-  const handleDownload = async () => {
-    setDownloading(true)
-    try {
-      const res = await fetch(`${API}/api/download-detector`)
-      if (!res.ok) throw new Error('not available')
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'SpecCheck_Detect.exe'
-      a.click()
-    } catch {
-      alert('File detector belum tersedia. Gunakan Input Manual.')
-    } finally {
-      setDownloading(false)
+  useEffect(() => {
+    // Fetch live game count (Optimized: fetch count only, not all records)
+    const loadGameCount = async () => {
+      try {
+        const res = await fetch(`${API}/api/software/count`)
+        const data = await res.json()
+        setGameCount(data.count)
+      } catch { setGameCount(null) }
     }
-  }
+    loadGameCount()
+
+    // Fetch featured games (Exactly 3 popular games)
+    const loadFeaturedGames = async () => {
+      try {
+        setLoadingFeatured(true)
+        const res = await fetch(`${API}/api/software/featured`)
+        const data = await res.json()
+        setFeaturedGames(data)
+      } catch (err) {
+        console.error('Failed to fetch featured games:', err)
+      } finally {
+        setLoadingFeatured(false)
+      }
+    }
+    loadFeaturedGames()
+  }, [])
+
+  const sectionTitle = (text, sub) => (
+    <div style={{ marginBottom: '1.5rem' }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.3rem',
+        letterSpacing: '-0.01em', marginBottom: 4
+      }}>{text}</h2>
+      {sub && <p style={{ color: 'var(--text3)', fontSize: '0.8rem' }}>{sub}</p>}
+    </div>
+  )
 
   return (
-    <main style={{ maxWidth: 1000, margin: '0 auto', padding: '5rem 2rem' }}>
-      {/* Hero */}
-      <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease both' }}>
+    <main style={{ maxWidth: 1100, margin: '0 auto', padding: '2.5rem 2rem 4rem' }}>
+
+      {/* ── 1. EXPLANATION SECTION (WHAT IS THIS WEBSITE) ── */}
+      <section style={{
+        textAlign: 'center',
+        marginBottom: '3rem',
+        animation: 'fadeUp 0.5s ease',
+      }}>
         <div style={{
-          display: 'inline-block',
-          background: 'rgba(0,212,255,0.08)',
-          border: '1px solid rgba(0,212,255,0.2)',
-          borderRadius: 100,
-          padding: '6px 20px',
-          fontSize: '0.75rem',
-          fontFamily: 'var(--font-mono)',
-          color: 'var(--accent)',
-          letterSpacing: '0.1em',
-          marginBottom: '2rem',
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: 'var(--bg2)', border: '1px solid var(--border)',
+          borderRadius: 20, padding: '4px 14px', marginBottom: '1.25rem',
+          fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text2)',
         }}>
-          ✦ POWERED BY CLAUDE AI
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }}/>
+          {gameCount !== null ? `${gameCount.toLocaleString('id-ID')} Game Terdaftar` : 'Menganalisis Database...'}
         </div>
 
         <h1 style={{
-          fontFamily: 'var(--font-display)',
-          fontWeight: 800,
-          fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-          lineHeight: 1.05,
-          letterSpacing: '-0.03em',
-          marginBottom: '1.5rem',
+          fontFamily: 'var(--font-display)', fontWeight: 800,
+          fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', lineHeight: 1.15,
+          letterSpacing: '-0.025em', marginBottom: '1rem',
         }}>
-          <span style={{ color: 'var(--text)' }}>Cek Kompatibilitas</span><br />
-          <span style={{ color: 'var(--accent)' }}>PC</span>
-          <span style={{ color: 'var(--text)' }}> Kamu dalam</span>
-          <span style={{
-            background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}> Detik</span>
+          Cek Kompatibilitas PC Kamu<br />
+          <span style={{ color: 'var(--accent)' }}>Instan, Akurat, dan Cerdas.</span>
         </h1>
 
         <p style={{
-          fontSize: '1.1rem',
-          color: 'var(--text2)',
-          maxWidth: 520,
-          margin: '0 auto 3rem',
-          lineHeight: 1.7,
+          fontSize: '0.92rem', color: 'var(--text2)', lineHeight: 1.7,
+          marginBottom: '2rem', maxWidth: 650, margin: '0 auto 2rem',
         }}>
-          Analisis 30 software & game populer. Sistem AI akan memberi grade <strong style={{ color: 'var(--text)' }}>S–D</strong> untuk setiap aplikasi berdasarkan spesifikasi PC-mu.
+          <strong>Bisa Main Nggak Ya</strong> membandingkan hardware PC Anda dengan database spesifikasi ribuan game secara real-time. 
+          Cari tahu apakah komputer Anda mampu menjalankan game impian Anda pada spesifikasi Minimum maupun Rekomendasi 
+          sebelum membelinya.
         </p>
 
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={handleDownload} disabled={downloading} style={{
-            background: 'linear-gradient(135deg, var(--accent), #0099bb)',
+        {/* Dedicated CTA Button to Test Your PC Page */}
+        <button
+          onClick={() => nav('/test-pc')}
+          style={{
+            background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
             color: '#000',
-            fontWeight: 700,
-            fontSize: '1rem',
-            padding: '14px 32px',
+            border: 'none',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            padding: '12px 28px',
             borderRadius: 8,
-            display: 'flex', alignItems: 'center', gap: 8,
-            opacity: downloading ? 0.7 : 1,
-            transition: 'transform 0.15s',
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(229,184,66,0.25)',
+            transition: 'all 0.2s',
           }}
-          onMouseEnter={e => e.target.style.transform = 'translateY(-2px)'}
-          onMouseLeave={e => e.target.style.transform = 'translateY(0)'}>
-            {downloading ? '⏳ Downloading...' : '⚡ Deteksi Otomatis (.exe)'}
-          </button>
-
-          <button onClick={() => nav('/manual')} style={{
-            background: 'transparent',
-            color: 'var(--text)',
-            fontWeight: 600,
-            fontSize: '1rem',
-            padding: '14px 32px',
-            borderRadius: 8,
-            border: '1px solid var(--border)',
-            transition: 'all 0.15s',
+          onMouseEnter={e => {
+            e.currentTarget.style.opacity = '0.9';
+            e.currentTarget.style.transform = 'translateY(-1px)';
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text)' }}>
-            ✏️ Input Manual
-          </button>
-        </div>
-      </div>
+          onMouseLeave={e => {
+            e.currentTarget.style.opacity = '1';
+            e.currentTarget.style.transform = 'none';
+          }}
+        >
+          Test PC Kamu Sekarang →
+        </button>
+      </section>
 
-      {/* How it works */}
-      <div style={{ marginTop: '6rem', animation: 'fadeUp 0.6s 0.2s ease both', opacity: 0, animationFillMode: 'forwards' }}>
-        <h2 style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.75rem',
-          letterSpacing: '0.15em',
-          color: 'var(--text3)',
-          textAlign: 'center',
-          marginBottom: '2.5rem',
-          textTransform: 'uppercase',
-        }}>Cara Kerja</h2>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' }}>
-          {[
-            { step: '01', icon: '🖥️', title: 'Deteksi Spek', desc: 'Download .exe atau isi manual CPU, RAM, GPU, Storage PC kamu' },
-            { step: '02', icon: '⚙️', title: 'Analisis Engine', desc: 'Rule-based engine membandingkan dengan syarat 30 software & game' },
-            { step: '03', icon: '🤖', title: 'AI Summary', desc: 'Claude AI membuat ringkasan hasil dalam bahasa Indonesia yang mudah dipahami' },
-            { step: '04', icon: '📊', title: 'Lihat Grade', desc: 'Dapatkan grade S/A/B/C/D untuk setiap software beserta saran upgrade' },
-          ].map(({ step, icon, title, desc }) => (
-            <div key={step} style={{
-              background: 'var(--bg2)',
-              border: '1px solid var(--border)',
-              borderRadius: 12,
-              padding: '1.5rem',
-              position: 'relative',
-              overflow: 'hidden',
+      {/* ── 2. GRADE SYSTEM EXPLAINER ── */}
+      <section style={{
+        marginBottom: '3.5rem',
+        animation: 'fadeUp 0.5s 0.2s ease both',
+        opacity: 0, animationFillMode: 'forwards',
+      }}>
+        {sectionTitle('Sistem Penilaian', 'Spesifikasi Anda akan dinilai berdasarkan standar performa berikut')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.5rem' }}>
+          {GRADE_DEFS.map(g => (
+            <div key={g.grade} style={{
+              background: g.bg, border: `1px solid ${g.color}15`,
+              borderRadius: 10, padding: '1rem 0.75rem', textAlign: 'center',
             }}>
               <div style={{
-                position: 'absolute', top: 12, right: 12,
-                fontFamily: 'var(--font-mono)', fontSize: '0.7rem',
-                color: 'var(--text3)',
-              }}>{step}</div>
-              <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>{icon}</div>
-              <h3 style={{ fontWeight: 700, marginBottom: '0.5rem', fontSize: '1rem' }}>{title}</h3>
-              <p style={{ color: 'var(--text2)', fontSize: '0.875rem', lineHeight: 1.6 }}>{desc}</p>
+                fontFamily: 'var(--font-mono)', fontSize: '1.8rem', fontWeight: 800,
+                color: g.color, lineHeight: 1, marginBottom: 6,
+              }}>{g.grade}</div>
+              <div style={{ fontWeight: 700, fontSize: '0.78rem', marginBottom: 4, color: g.color }}>{g.label}</div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--text2)', lineHeight: 1.4 }}>{g.desc}</div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Stats */}
-      <div style={{
-        marginTop: '4rem',
-        background: 'var(--bg2)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        padding: '2rem',
-        display: 'flex',
-        justifyContent: 'space-around',
-        flexWrap: 'wrap',
-        gap: '1rem',
-        animation: 'fadeUp 0.6s 0.4s ease both',
-        opacity: 0,
-        animationFillMode: 'forwards',
+      {/* ── 3. FEATURED FAMOUS GAMES (3 POPULAR GAMES) ── */}
+      <section style={{
+        marginBottom: '3.5rem',
+        animation: 'fadeUp 0.5s 0.3s ease both',
+        opacity: 0, animationFillMode: 'forwards',
       }}>
-        {[
-          { n: '30', label: 'Software & Game' },
-          { n: '4', label: 'Komponen Dicek' },
-          { n: 'S–D', label: 'Grade System' },
-          { n: 'AI', label: 'Ringkasan Claude' },
-        ].map(({ n, label }) => (
-          <div key={label} style={{ textAlign: 'center' }}>
-            <div style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '2rem',
-              fontWeight: 700,
-              color: 'var(--accent)',
-              lineHeight: 1,
-            }}>{n}</div>
-            <div style={{ color: 'var(--text2)', fontSize: '0.8rem', marginTop: 6 }}>{label}</div>
+        {sectionTitle('🎮 Game Populer', 'Pilih salah satu game ternama di bawah untuk langsung mengecek performanya di spesifikasi Anda')}
+
+        {loadingFeatured ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{
+                background: 'var(--bg2)', border: '1px solid var(--border)',
+                borderRadius: 12, height: 160, display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <span style={{ color: 'var(--text3)', fontSize: '0.85rem' }}>Loading game data...</span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '1.25rem'
+          }}>
+            {featuredGames.map(game => (
+              <div key={game.id} style={{
+                background: 'var(--bg2)',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+              >
+                {/* Cover Image */}
+                <div style={{
+                  height: 140,
+                  background: 'var(--bg3)',
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}>
+                  {game.cover_image_url ? (
+                    <img 
+                      src={`${API}/api/image-proxy?url=${encodeURIComponent(game.cover_image_url)}`} 
+                      alt={game.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={e => { e.target.style.display = 'none' }}
+                    />
+                  ) : null}
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(to top, var(--bg2) 10%, transparent 90%)'
+                  }} />
+                </div>
+
+                {/* Game Title & Link */}
+                <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                  <h3 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.75rem', lineHeight: 1.4 }}>
+                    {game.name}
+                  </h3>
+                  <Link 
+                    to={`/game/${game.id}`}
+                    style={{
+                      display: 'block',
+                      textAlign: 'center',
+                      background: 'var(--bg3)',
+                      color: 'var(--accent)',
+                      border: '1px solid var(--border)',
+                      borderRadius: 6,
+                      padding: '8px 12px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => { e.target.style.background = 'var(--accent)'; e.target.style.color = '#000' }}
+                    onMouseLeave={e => { e.target.style.background = 'var(--bg3)'; e.target.style.color = 'var(--accent)' }}
+                  >
+                    Lihat Detail & Cek Spek
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
     </main>
   )
 }

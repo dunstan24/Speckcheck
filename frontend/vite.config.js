@@ -6,5 +6,8 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',   // wajib agar Vite bisa diakses dari luar container
     port: 5173,
+    watch: {
+      usePolling: true,
+    }
   }
 })

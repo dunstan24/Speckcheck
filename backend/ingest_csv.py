@@ -147,27 +147,26 @@ def parse_storage(storage_str):
         
     return 5  # Fallback standard minimum game
 
-def find_csv_file():
-    # Cari di folder /data (container) atau ./data (host) atau ../data
+def find_all_csv_files():
+    """Temukan SEMUA file CSV di folder data, urutkan berdasarkan nama."""
     paths = ["/data/*.csv", "./data/*.csv", "../data/*.csv", "data/*.csv"]
     for p in paths:
         files = glob.glob(p)
         if files:
-            # Urutkan berdasarkan abjad/tanggal agar mendapat file terbaru
             files.sort()
-            return files[-1]
-    return None
+            return files
+    return []
 
 def check_and_add_columns(cursor):
-    """Pastikan kolom baru PCGamingWiki ada di tabel software (self-migrating)."""
+    """Pastikan kolom ada dan ukurannya cukup besar (self-migrating)."""
     columns_to_add = [
-        ("url", "VARCHAR(255) NULL"),
-        ("description", "TEXT NULL"),
-        ("cover_image_url", "VARCHAR(500) NULL"),
-        ("raw_cpu_min", "VARCHAR(255) NULL"),
-        ("raw_gpu_min", "VARCHAR(255) NULL"),
-        ("raw_cpu_rec", "VARCHAR(255) NULL"),
-        ("raw_gpu_rec", "VARCHAR(255) NULL")
+        ("url",             "VARCHAR(500) NULL"),
+        ("description",     "TEXT NULL"),
+        ("cover_image_url", "TEXT NULL"),
+        ("raw_cpu_min",     "TEXT NULL"),
+        ("raw_gpu_min",     "TEXT NULL"),
+        ("raw_cpu_rec",     "TEXT NULL"),
+        ("raw_gpu_rec",     "TEXT NULL")
     ]
     
     # Dapatkan kolom yang sudah ada
@@ -176,10 +175,25 @@ def check_and_add_columns(cursor):
     
     for col_name, col_type in columns_to_add:
         if col_name not in existing_cols:
-            print(f"[MIGRATION] Menambahkan kolom '{col_name}' ke tabel software...")
+            print(f"[MIGRATION] Menambahkan kolom '{col_name}'...")
             cursor.execute(f"ALTER TABLE software ADD COLUMN {col_name} {col_type}")
-    
-    # Pastikan kolom id punya AUTO_INCREMENT agar insert tidak perlu menyertakan id manual
+
+    # Perbesar kolom yang mungkin terlalu kecil dari versi lama
+    resize_cols = [
+        ("name",            "VARCHAR(500) NOT NULL"),
+        ("cover_image_url", "TEXT NULL"),
+        ("raw_cpu_min",     "TEXT NULL"),
+        ("raw_gpu_min",     "TEXT NULL"),
+        ("raw_cpu_rec",     "TEXT NULL"),
+        ("raw_gpu_rec",     "TEXT NULL"),
+    ]
+    for col_name, col_type in resize_cols:
+        try:
+            cursor.execute(f"ALTER TABLE software MODIFY COLUMN {col_name} {col_type}")
+        except Exception:
+            pass  # Sudah benar, abaikan
+
+    # Pastikan kolom id punya AUTO_INCREMENT
     try:
         cursor.execute("""
             ALTER TABLE software MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT
@@ -188,15 +202,30 @@ def check_and_add_columns(cursor):
     except Exception:
         pass  # Sudah AUTO_INCREMENT, abaikan
 
+
+MAX_INT = 2_147_483_647  # Batas MySQL INT
+
+def trunc(value, max_len):
+    """Potong string agar tidak melebihi batas kolom."""
+    if value and len(value) > max_len:
+        return value[:max_len]
+    return value
+
+def clamp_int(value):
+    """Pastikan nilai integer tidak melebihi batas MySQL INT."""
+    return max(0, min(int(value), MAX_INT))
+
 def main():
     print("=== SpecCheck.AI - Memulai Proses Ingest Data PCGamingWiki ===")
     
-    csv_file = find_csv_file()
-    if not csv_file:
-        print("[ERROR] File CSV PCGamingWiki tidak ditemukan di folder /data!")
+    csv_files = find_all_csv_files()
+    if not csv_files:
+        print("[ERROR] Tidak ada file CSV ditemukan di folder /data!")
         return
         
-    print(f"[INFO] Menemukan file CSV: {csv_file}")
+    print(f"[INFO] Menemukan {len(csv_files)} file CSV:")
+    for f in csv_files:
+        print(f"  - {f}")
     
     # Koneksi ke database MySQL
     try:
@@ -235,82 +264,99 @@ def main():
         conn.close()
         return
 
-    # 2. Baca file CSV
+    # 2. Baca SEMUA file CSV satu per satu
     games_inserted = 0
-    try:
-        with open(csv_file, mode='r', encoding='utf-8-sig') as f:
-            reader = csv.DictReader(f)
-            
-            insert_query = """
-                INSERT INTO software (
-                    name, cat, icon, 
-                    min_cpu, min_ram, min_vram, min_disk, 
-                    rec_cpu, rec_ram, rec_vram, rec_disk,
-                    url, description, cover_image_url,
-                    raw_cpu_min, raw_gpu_min, raw_cpu_rec, raw_gpu_rec
-                ) VALUES (
-                    %s, %s, %s,
-                    %s, %s, %s, %s,
-                    %s, %s, %s, %s,
-                    %s, %s, %s,
-                    %s, %s, %s, %s
-                )
-            """
-            
-            for row in reader:
-                title = row.get("Title", "").strip()
-                if not title:
-                    continue
-                
-                # Parsing spesifikasi numerik minimum
-                min_cpu = parse_cpu(row.get("CPU_Minimum", ""))
-                min_ram = parse_ram(row.get("RAM_Minimum", ""))
-                min_vram = parse_vram(row.get("GPU_Minimum", ""))
-                min_disk = parse_storage(row.get("Storage_Minimum", ""))
-                
-                # Parsing spesifikasi numerik rekomendasi
-                rec_cpu = parse_cpu(row.get("CPU_Recommended", ""))
-                rec_ram = parse_ram(row.get("RAM_Recommended", ""))
-                rec_vram = parse_vram(row.get("GPU_Recommended", ""))
-                rec_disk = parse_storage(row.get("Storage_Recommended", ""))
-                
-                # Bersihkan deskripsi "N/A"
-                desc = row.get("Description", "").strip()
-                if desc == "N/A":
-                    desc = f"Game petualangan seru '{title}' dari database PCGamingWiki."
-                
-                # cover image
-                cover = row.get("Cover_Image_URL", "").strip()
-                if cover == "N/A":
-                    cover = ""
+    games_skipped = 0
 
-                # values to insert
-                vals = (
-                    title, 
-                    "Game", 
-                    "🎮", # Semua PCGamingWiki game mendapat icon stick console
-                    min_cpu, min_ram, min_vram, min_disk,
-                    rec_cpu, rec_ram, rec_vram, rec_disk,
-                    row.get("URL", "").strip(),
-                    desc,
-                    cover,
-                    row.get("CPU_Minimum", "").strip(),
-                    row.get("GPU_Minimum", "").strip(),
-                    row.get("CPU_Recommended", "").strip(),
-                    row.get("GPU_Recommended", "").strip()
-                )
-                
-                try:
-                    cursor.execute(insert_query, vals)
-                    games_inserted += 1
-                except Exception as e:
-                    print(f"  - [WARNING] Gagal memasukkan game '{title}': {e}")
+    insert_query = """
+        INSERT INTO software (
+            name, cat, icon, 
+            min_cpu, min_ram, min_vram, min_disk, 
+            rec_cpu, rec_ram, rec_vram, rec_disk,
+            url, description, cover_image_url,
+            raw_cpu_min, raw_gpu_min, raw_cpu_rec, raw_gpu_rec
+        ) VALUES (
+            %s, %s, %s,
+            %s, %s, %s, %s,
+            %s, %s, %s, %s,
+            %s, %s, %s,
+            %s, %s, %s, %s
+        )
+    """
+
+    try:
+        for csv_file in csv_files:
+            file_count = 0
+            print(f"\n[FILE] Membaca: {csv_file}")
+            try:
+                with open(csv_file, mode='r', encoding='utf-8-sig') as f:
+                    reader = csv.DictReader(f)
                     
-        conn.commit()
-        print(f"\n[SUKSES] Berhasil mengimpor {games_inserted} game baru dari PCGamingWiki!")
+                    for row in reader:
+                        title = row.get("Title", "").strip()
+                        if not title:
+                            continue
+
+                        # Truncate nama game agar muat di VARCHAR(500)
+                        title = trunc(title, 499)
+                        
+                        # Parsing spesifikasi numerik minimum — clamp agar tidak overflow INT
+                        min_cpu  = clamp_int(parse_cpu(row.get("CPU_Minimum", "")))
+                        min_ram  = clamp_int(parse_ram(row.get("RAM_Minimum", "")))
+                        min_vram = parse_vram(row.get("GPU_Minimum", ""))
+                        min_disk = clamp_int(parse_storage(row.get("Storage_Minimum", "")))
+                        
+                        # Parsing spesifikasi numerik rekomendasi
+                        rec_cpu  = clamp_int(parse_cpu(row.get("CPU_Recommended", "")))
+                        rec_ram  = clamp_int(parse_ram(row.get("RAM_Recommended", "")))
+                        rec_vram = parse_vram(row.get("GPU_Recommended", ""))
+                        rec_disk = clamp_int(parse_storage(row.get("Storage_Recommended", "")))
+                        
+                        # Bersihkan deskripsi "N/A"
+                        desc = row.get("Description", "").strip()
+                        if desc == "N/A":
+                            desc = ""
+                        
+                        # cover image
+                        cover = row.get("Cover_Image_URL", "").strip()
+                        if cover == "N/A":
+                            cover = ""
+
+                        vals = (
+                            title,
+                            "Game",
+                            "🎮",
+                            min_cpu, min_ram, min_vram, min_disk,
+                            rec_cpu, rec_ram, rec_vram, rec_disk,
+                            trunc(row.get("URL", "").strip(), 499),
+                            desc,
+                            cover,  # TEXT — tidak perlu truncate
+                            row.get("CPU_Minimum", "").strip(),
+                            row.get("GPU_Minimum", "").strip(),
+                            row.get("CPU_Recommended", "").strip(),
+                            row.get("GPU_Recommended", "").strip()
+                        )
+                        
+                        try:
+                            cursor.execute(insert_query, vals)
+                            games_inserted += 1
+                            file_count += 1
+                        except Exception as e:
+                            print(f"  - [WARNING] Gagal memasukkan game '{title}': {e}")
+                            games_skipped += 1
+
+                conn.commit()
+                print(f"  -> {file_count} game diimpor dari file ini.")
+
+            except Exception as e:
+                print(f"  [ERROR] Gagal membaca file {csv_file}: {e}")
+
+        print(f"\n[SUKSES] Total {games_inserted} game berhasil diimpor dari {len(csv_files)} file CSV!")
+        if games_skipped > 0:
+            print(f"[INFO] {games_skipped} baris dilewati karena error.")
         
     except Exception as e:
-        print(f"[ERROR] Gagal membaca CSV: {e}")
+        print(f"[ERROR] Terjadi kesalahan fatal: {e}")
         
     finally:
         cursor.close()

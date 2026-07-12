@@ -1,0 +1,78 @@
+# ─── Environment Variables (Sensitive) ───────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Node / Frontend ─────────────────────────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+*.local
+.eslintcache
+
+# ─── Python / Backend ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ─── Python Package Build & Detector Builds ──────────────────────────────────
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+manifest
+spec/
+
+# Detector build files
+detector/dist/
+detector/build/
+detector/*.spec
+detector/*.exe
+
+# ─── Docker / DB ─────────────────────────────────────────────────────────────
+.docker-sync.log
+# database data directories if mapped locally
+mysql_data/
+db_data/
+
+# ─── IDEs, Editors & OS Files ────────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Data & Logs ─────────────────────────────────────────────────────────────
+data/
+*.log
+*.sqlite
+*.db
+
+# ─── Agents ──────────────────────────────────────────────────────────────────
+[Aa]gents/
