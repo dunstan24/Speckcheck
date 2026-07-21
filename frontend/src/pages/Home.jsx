@@ -25,7 +25,11 @@ export default function Home() {
         setLoadingFeatured(true)
         const res = await fetch(`${API}/api/software/featured`)
         const data = await res.json()
-        setFeaturedGames(data)
+        if (Array.isArray(data)) {
+          setFeaturedGames(data)
+        } else {
+          setFeaturedGames([])
+        }
       } catch (err) {
         console.error('Failed to fetch featured games:', err)
       } finally {
