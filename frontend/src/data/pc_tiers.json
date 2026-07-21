@@ -1,0 +1,51 @@
+{
+  "last_updated": "2026-07-20 06:37:29",
+  "total_games": 49710,
+  "tiers": [
+    {
+      "id": "under_10m",
+      "name": "Entry-Level Gaming",
+      "price_range": "Di bawah Rp 10 Juta (~Rp 7.5 - 8.5 Jt)",
+      "specs": {
+        "cpu": "Intel Core i3-12100F",
+        "gpu": "NVIDIA GeForce GTX 1660 Super 6GB",
+        "ram": "16 GB DDR4",
+        "storage": "512 GB NVMe SSD"
+      },
+      "playable_games_count": 41713,
+      "optimal_games_count": 41713,
+      "playable_percentage": 83.9,
+      "optimal_percentage": 83.9
+    },
+    {
+      "id": "around_10m",
+      "name": "Sweet-Spot",
+      "price_range": "Rp 10 - 12 Juta (~Rp 10.5 - 11.5 Jt)",
+      "specs": {
+        "cpu": "AMD Ryzen 5 5600",
+        "gpu": "NVIDIA GeForce RTX 3060 12GB",
+        "ram": "16 GB DDR4 Dual Channel",
+        "storage": "1 TB NVMe SSD"
+      },
+      "playable_games_count": 43778,
+      "optimal_games_count": 43778,
+      "playable_percentage": 88.1,
+      "optimal_percentage": 88.1
+    },
+    {
+      "id": "around_15m",
+      "name": "High-Performance",
+      "price_range": "Rp 15 - 17 Juta (~Rp 15.5 - 16.5 Jt)",
+      "specs": {
+        "cpu": "AMD Ryzen 5 7600",
+        "gpu": "NVIDIA GeForce RTX 4060 Ti 8GB",
+        "ram": "32 GB DDR5 Dual Channel",
+        "storage": "1 TB NVMe SSD Gen 4"
+      },
+      "playable_games_count": 43866,
+      "optimal_games_count": 43866,
+      "playable_percentage": 88.2,
+      "optimal_percentage": 88.2
+    }
+  ]
+}
