@@ -156,11 +156,11 @@ def row_to_sw(r):
         "name": r["name"],
         "cat":  r["cat"],
         "icon": None,
-        "min":  {"cpu": r["min_cpu"], "ram": r["min_ram"],
-                 "vram": float(r["min_vram"] or 0), "disk": r["min_disk"],
+        "min":  {"cpu": int(r["min_cpu"] or 0), "ram": int(r["min_ram"] or 0),
+                 "vram": float(r["min_vram"] or 0), "disk": int(r["min_disk"] or 0),
                  "gpu_score": vram_to_score(float(r["min_vram"] or 0))},
-        "rec":  {"cpu": r["rec_cpu"], "ram": r["rec_ram"],
-                 "vram": float(r["rec_vram"] or 0), "disk": r["rec_disk"],
+        "rec":  {"cpu": int(r["rec_cpu"] or 0), "ram": int(r["rec_ram"] or 0),
+                 "vram": float(r["rec_vram"] or 0), "disk": int(r["rec_disk"] or 0),
                  "gpu_score": vram_to_score(float(r["rec_vram"] or 0))},
         "url":             r.get("url"),
         "description":     r.get("description"),
@@ -554,10 +554,10 @@ def analyze_one(spec, sw, cpu_score, gpu_score):
     rec_gpu = float(rec_gpu_score) or sw["rec"]["gpu_score"]
 
     checks = [
-        ("CPU",     cpu_score,    min_cpu,           rec_cpu),
-        ("RAM",     spec["ram"],  sw["min"]["ram"],  sw["rec"]["ram"]),
-        ("GPU",     gpu_score,    min_gpu,           rec_gpu),
-        ("Storage", spec["disk"], sw["min"]["disk"], sw["rec"]["disk"]),
+        ("CPU",     cpu_score,    int(min_cpu or 0),   int(rec_cpu or 0)),
+        ("RAM",     spec["ram"],  int(sw["min"]["ram"] or 0),  int(sw["rec"]["ram"] or 0)),
+        ("GPU",     gpu_score,    float(min_gpu or 0), float(rec_gpu or 0)),
+        ("Storage", spec["disk"], int(sw["min"]["disk"] or 0), int(sw["rec"]["disk"] or 0)),
     ]
     total_score = 0
     details = []

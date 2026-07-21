@@ -40,10 +40,10 @@ export function analyzeOne(spec, sw) {
   }
 
   const checks = [
-    ['CPU',     userCpuScore, minCpu, recCpu],
-    ['RAM',     spec.ram,     sw.min.ram,  sw.rec.ram],
-    ['GPU',     userGpuScore, minGpu, recGpu],
-    ['Storage', spec.disk,    sw.min.disk, sw.rec.disk],
+    ['CPU',     userCpuScore, Number(minCpu) || 0, Number(recCpu) || 0],
+    ['RAM',     spec.ram,     Number(sw.min?.ram) || 0, Number(sw.rec?.ram) || 0],
+    ['GPU',     userGpuScore, Number(minGpu) || 0, Number(recGpu) || 0],
+    ['Storage', spec.disk,    Number(sw.min?.disk) || 0, Number(sw.rec?.disk) || 0],
   ]
 
   let totalScore = 0
