@@ -1,4 +1,4 @@
-import { matchCpu, matchGpu, resolveGameRequirement, mhzToScore } from './hardwareMatcher'
+import { matchCpu, matchGpu, resolveGameRequirement, mhzToScore, vramToScore } from './hardwareMatcher'
 
 export function normalizeSpec(spec) {
   return {
@@ -24,8 +24,8 @@ export function analyzeOne(spec, sw) {
   // Resolve game CPU/GPU requirement strings or fallback to DB numeric
   let minCpu = 0
   let recCpu = 0
-  let minGpu = sw.min.gpu_score ?? (sw.min.vram * 3000)
-  let recGpu = sw.rec.gpu_score ?? (sw.rec.vram * 3000)
+  let minGpu = sw.min.gpu_score ?? vramToScore(sw.min.vram)
+  let recGpu = sw.rec.gpu_score ?? vramToScore(sw.rec.vram)
 
   if (sw.raw && (sw.raw.cpu_min || sw.raw.gpu_min || sw.raw.cpu_rec || sw.raw.gpu_rec)) {
     const minResolved = resolveGameRequirement(sw.raw.cpu_min, sw.raw.gpu_min)

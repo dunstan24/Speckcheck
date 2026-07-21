@@ -145,15 +145,15 @@ export default function Home() {
           {pcTiersData?.tiers?.map(tier => {
             // Mapping specifications for navigation query params
             const tierMapping = {
-              under_10m: { cpuVal: 4300, gpuVal: 8, cpuName: 'Intel Core i3-12100F', gpuName: 'NVIDIA GeForce GTX 1660 Super', ram: 16, disk: 512 },
+              under_10m: { cpuVal: 4300, gpuVal: 6, cpuName: 'Intel Core i3-12100F', gpuName: 'NVIDIA GeForce GTX 1660 Super', ram: 16, disk: 512 },
               around_10m: { cpuVal: 4400, gpuVal: 12, cpuName: 'AMD Ryzen 5 5600', gpuName: 'NVIDIA GeForce RTX 3060', ram: 16, disk: 1000 },
               around_15m: { cpuVal: 5100, gpuVal: 8, cpuName: 'AMD Ryzen 5 7600', gpuName: 'NVIDIA GeForce RTX 4060 Ti', ram: 32, disk: 1000 }
             }
             const map = tierMapping[tier.id] || {}
             
-            const testPCUrl = `/test-pc?cpuName=${encodeURIComponent(map.cpuName)}&cpu=${map.cpuVal}&gpuName=${encodeURIComponent(map.gpuName)}&ram=${map.ram}&disk=${map.disk}`
+            const testPCUrl = `/test-pc?cpuName=${encodeURIComponent(map.cpuName)}&cpu=${map.cpuVal}&gpuName=${encodeURIComponent(map.gpuName)}&vram=${map.gpuVal}&ram=${map.ram}&disk=${map.disk}`
             
-            const resultsUrl = `/results?cpuName=${encodeURIComponent(map.cpuName)}&cpu=${map.cpuVal}&gpuName=${encodeURIComponent(map.gpuName)}&ram=${map.ram}&disk=${map.disk}`
+            const resultsUrl = `/results?cpuName=${encodeURIComponent(map.cpuName)}&cpu=${map.cpuVal}&gpuName=${encodeURIComponent(map.gpuName)}&vram=${map.gpuVal}&ram=${map.ram}&disk=${map.disk}`
 
             return (
               <div key={tier.id} style={{
