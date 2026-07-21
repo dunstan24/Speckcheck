@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',   // wajib agar Vite bisa diakses dari luar container
     port: 5173,
+    allowedHosts: true, // izinkan semua domain header (bisamainnggak.com)
     watch: {
       usePolling: true,
     }
