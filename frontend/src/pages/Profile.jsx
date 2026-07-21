@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname.includes('bisamainnggak.com') ? 'https://api.bisamainnggak.com' : 'http://localhost:5000');
 
 // Komponen skeleton shimmer untuk loading state
 function Skeleton({ w = '100%', h = 18, radius = 6, style = {} }) {
@@ -617,7 +617,7 @@ export default function Profile() {
 }
 
 function RequestGameSection({ user }) {
-  const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  const API = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname.includes('bisamainnggak.com') ? 'https://api.bisamainnggak.com' : 'http://localhost:5000');
   const [gameName, setGameName] = useState('')
   const [notes, setNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)

@@ -40,6 +40,7 @@ services:
       - DB_USER=${DB_USER:-speccheck}
       - DB_PASSWORD=${DB_PASSWORD:-Sp3cCh3ck@Db#2026!xK9mPqR7}
       - DB_NAME=${DB_NAME:-speccheck}
+      - FRONTEND_URL=https://bisamainnggak.com
     env_file:
       - path: ./backend/.env
         required: false

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import pcTiersData from '../data/pc_tiers.json'
 
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && window.location.hostname.includes('bisamainnggak.com') ? 'https://api.bisamainnggak.com' : 'http://localhost:5000');
 
 const GRADE_DEFS = [
   { grade: 'S', label: 'Sangat Optimal', desc: 'Semua komponen melebihi rekomendasi', color: '#e5b842', bg: 'rgba(229,184,66,0.06)' },

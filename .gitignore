@@ -70,6 +70,7 @@ desktop.ini
 
 # ─── Data & Logs ─────────────────────────────────────────────────────────────
 data/
+!data/*.csv
 !frontend/src/data/
 *.log
 *.sqlite

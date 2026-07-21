@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-07-20 06:37:29",
+  "last_updated": "2026-07-21 09:19:00",
   "total_games": 49710,
   "tiers": [
     {
@@ -12,8 +12,8 @@
         "ram": "16 GB DDR4",
         "storage": "512 GB NVMe SSD"
       },
-      "playable_games_count": 41713,
-      "optimal_games_count": 41713,
+      "playable_games_count": 41712,
+      "optimal_games_count": 41712,
       "playable_percentage": 83.9,
       "optimal_percentage": 83.9
     },
@@ -27,8 +27,8 @@
         "ram": "16 GB DDR4 Dual Channel",
         "storage": "1 TB NVMe SSD"
       },
-      "playable_games_count": 43778,
-      "optimal_games_count": 43778,
+      "playable_games_count": 43777,
+      "optimal_games_count": 43777,
       "playable_percentage": 88.1,
       "optimal_percentage": 88.1
     },
@@ -42,8 +42,8 @@
         "ram": "32 GB DDR5 Dual Channel",
         "storage": "1 TB NVMe SSD Gen 4"
       },
-      "playable_games_count": 43866,
-      "optimal_games_count": 43866,
+      "playable_games_count": 43865,
+      "optimal_games_count": 43865,
       "playable_percentage": 88.2,
       "optimal_percentage": 88.2
     }

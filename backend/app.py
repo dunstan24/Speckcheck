@@ -21,10 +21,10 @@ app = Flask(__name__)
 _IMAGE_CACHE: dict = {}
 _IMAGE_CACHE_TTL = 24 * 60 * 60  # 24 jam
 
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://bisamainnggak.com")
 
-# Batasi CORS ke frontend origin untuk menghindari cross-origin resource sharing yang tidak terkontrol
-CORS(app, resources={r"/api/*": {"origins": [FRONTEND_URL, "http://localhost:5173", "http://localhost:3000"]}})
+# Izinkan CORS untuk semua origin (termasuk https://bisamainnggak.com dan www.bisamainnggak.com)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # Rate Limiter (in-memory storage untuk single-instance)
 limiter = Limiter(get_remote_address, app=app, default_limits=[],
