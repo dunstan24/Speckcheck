@@ -54,7 +54,7 @@ services:
     container_name: speccheck_frontend
     restart: unless-stopped
     ports:
-      - "5173:5173"
+      - "80:5173"
     volumes:
       - ./frontend:/app              # hot-reload: edit src/ langsung terbaca
       - /app/node_modules            # jangan timpa node_modules container
