@@ -53,6 +53,8 @@ services:
     build: ./frontend
     container_name: speccheck_frontend
     restart: unless-stopped
+    environment:
+      - VITE_API_URL=https://api.bisamainnggak.com
     command: sh -c "chmod -R +x /app/node_modules/.bin 2>/dev/null; npx vite --host 0.0.0.0 --port 5173"
     ports:
       - "80:5173"
