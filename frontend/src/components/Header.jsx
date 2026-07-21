@@ -39,29 +39,29 @@ export default function Header() {
         height: 56,
       }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <span style={{ fontSize: '1.2rem' }}>⚡</span>
           <span style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: '1.1rem',
-            letterSpacing: '-0.02em',
+            fontFamily: 'var(--font-primary)',
+            fontWeight: 700,
+            fontSize: '1.2rem',
+            letterSpacing: '0.02em',
           }}>
             <span style={{ color: 'var(--accent)' }}>Bisa</span>
-            <span style={{ color: 'var(--text)' }}> Main</span>
-            <span style={{ color: 'var(--accent2)' }}> Nggak Ya</span>
+            <span style={{ color: 'var(--text)' }}> main</span>
+            <span style={{ color: 'var(--accent2)' }}> nggak?</span>
           </span>
         </Link>
 
         <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          {[['/', 'Beranda'], ['/test-pc', 'Test Your PC'], ['/results', 'Game List']].map(([path, label]) => {
+          {[['/', 'Beranda'], ['/test-pc', 'Test Your PC'], ['/results', 'Game List'], ['/trending', 'Trending']].map(([path, label]) => {
             const isActive = path.includes('#')
               ? (loc.pathname === '/' && loc.hash === path.substring(path.indexOf('#')))
               : (loc.pathname === path && !loc.hash);
 
             return (
               <Link key={path} to={path} style={{
-                fontSize: '0.85rem',
-                fontWeight: 600,
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.9rem',
+                fontWeight: 500,
                 textDecoration: 'none',
                 color: isActive ? 'var(--accent)' : 'var(--text2)',
                 position: 'relative',
@@ -85,8 +85,9 @@ export default function Header() {
           {user && user.role === 'admin' && (
             <>
               <Link to="/hardware" style={{
-                fontSize: '0.85rem',
-                fontWeight: 600,
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.9rem',
+                fontWeight: 500,
                 textDecoration: 'none',
                 color: loc.pathname === '/hardware' ? 'var(--accent)' : 'var(--accent2)',
                 position: 'relative',
@@ -96,7 +97,7 @@ export default function Header() {
               onMouseEnter={e => e.target.style.color = 'var(--accent)'}
               onMouseLeave={e => e.target.style.color = loc.pathname === '/hardware' ? 'var(--accent)' : 'var(--accent2)'}
               >
-                🔬 DB HW
+                DB HW
                 {loc.pathname === '/hardware' && (
                   <div style={{
                     position: 'absolute', bottom: 0, left: 0, right: 0, height: 2,
@@ -105,8 +106,9 @@ export default function Header() {
                 )}
               </Link>
               <Link to="/admin" style={{
-                fontSize: '0.85rem',
-                fontWeight: 600,
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.9rem',
+                fontWeight: 500,
                 textDecoration: 'none',
                 color: loc.pathname === '/admin' ? 'var(--accent)' : 'var(--accent2)',
                 position: 'relative',
@@ -116,7 +118,7 @@ export default function Header() {
               onMouseEnter={e => e.target.style.color = 'var(--accent)'}
               onMouseLeave={e => e.target.style.color = loc.pathname === '/admin' ? 'var(--accent)' : 'var(--accent2)'}
               >
-                🔑 Admin
+                Admin
                 {loc.pathname === '/admin' && (
                   <div style={{
                     position: 'absolute', bottom: 0, left: 0, right: 0, height: 2,
@@ -134,7 +136,8 @@ export default function Header() {
               <Link to="/profile" style={{
                 fontSize: '0.875rem',
                 color: 'var(--text)',
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-body)',
+                fontWeight: 500,
                 background: 'var(--bg2)',
                 border: '1px solid var(--border)',
                 borderRadius: 6,
@@ -148,18 +151,20 @@ export default function Header() {
               onMouseEnter={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 10px rgba(var(--accent-rgb), 0.25)' }}
               onMouseLeave={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none' }}
               >
-                👤 {user.username}
+                {user.username}
               </Link>
               <button
                 onClick={handleLogout}
                 style={{
+                  fontFamily: 'var(--font-primary)',
+                  letterSpacing: '0.04em',
                   background: 'transparent',
                   border: '1px solid rgba(248, 113, 113, 0.3)',
                   color: '#f87171',
                   borderRadius: 6,
                   padding: '6px 14px',
                   fontSize: '0.82rem',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                 }}
@@ -173,11 +178,14 @@ export default function Header() {
             <Link
               to="/login"
               style={{
+                fontFamily: 'var(--font-primary)',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
                 background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
                 color: '#000',
                 borderRadius: 6,
-                padding: '6px 16px',
-                fontSize: '0.875rem',
+                padding: '6px 18px',
+                fontSize: '0.85rem',
                 fontWeight: 700,
                 textDecoration: 'none',
                 transition: 'opacity 0.2s',

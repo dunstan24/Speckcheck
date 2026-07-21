@@ -41,7 +41,6 @@ export default function ForgotPassword() {
         backdropFilter: 'blur(20px)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <span style={{ fontSize: '2.5rem' }}>🔑</span>
           <h1 style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 800,
@@ -53,7 +52,7 @@ export default function ForgotPassword() {
             Lupa <span style={{ color: 'var(--accent)' }}>Password</span>
           </h1>
           <p style={{ color: 'var(--text2)', fontSize: '0.875rem' }}>
-            Masukkan email atau username akun Google Anda
+            Masukkan email atau username akun Anda. Link reset akan dikirim ke email yang terdaftar.
           </p>
         </div>
 
@@ -69,7 +68,11 @@ export default function ForgotPassword() {
             lineHeight: 1.6,
             textAlign: 'center'
           }}>
-            ✅ Jika akun terdaftar, link reset telah dikirim ke email Anda. Periksa inbox dan folder spam Anda.
+            ✅ Jika akun terdaftar dan memiliki email, link reset telah dikirim. Periksa inbox dan folder spam Anda.
+            <br/>
+            <span style={{ color: 'var(--text3)', fontSize: '0.78rem', display: 'block', marginTop: 8 }}>
+              Link berlaku selama 1 jam.
+            </span>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
@@ -123,7 +126,7 @@ export default function ForgotPassword() {
               onMouseEnter={e => e.target.style.transform = 'translateY(-1px)'}
               onMouseLeave={e => e.target.style.transform = 'translateY(0)'}
             >
-              {loading ? '⏳ Mengirim...' : 'Kirim Link Reset →'}
+              {loading ? 'Mengirim...' : 'Kirim Link Reset →'}
             </button>
           </form>
         )}

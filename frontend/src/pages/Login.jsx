@@ -9,7 +9,6 @@ export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [showForgot, setShowForgot] = useState(false)
   const googleBtnRef = useRef(null)
 
   // Auto-save spec ke DB setelah login sukses (Alur B)
@@ -83,7 +82,11 @@ export default function Login() {
             if (!res.ok) throw new Error(data.error || 'Login Google gagal')
             await handleLoginSuccess(data.user)
           } catch (err) {
-            setError(err.message)
+            if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+              setError('Maaf, server sedang tidak dapat dihubungi. Silakan coba beberapa saat lagi.')
+            } else {
+              setError(err.message || 'Login Google gagal')
+            }
           } finally {
             setLoading(false)
           }
@@ -118,24 +121,11 @@ export default function Login() {
     setForm(f => ({ ...f, [name]: value }))
   }
 
-  // Cek auth_provider saat username blur untuk tampilkan/sembunyikan forgot password
-  const handleUsernameBlur = async () => {
-    const username = form.username.trim()
-    if (!username) { setShowForgot(false); return }
-    try {
-      const res = await fetch(`${API}/api/auth/check-provider?username=${encodeURIComponent(username)}`)
-      const data = await res.json()
-      setShowForgot(data.has_email === true)
-    } catch {
-      setShowForgot(false)
-    }
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     if (!form.username.trim() || !form.password.trim()) {
-      setError('Username dan password harus diisi')
+      setError('Username/email dan password harus diisi')
       return
     }
 
@@ -152,7 +142,11 @@ export default function Login() {
       }
       await handleLoginSuccess(data.user)
     } catch (err) {
-      setError(err.message)
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setError('Maaf, server sedang tidak dapat dihubungi. Silakan coba beberapa saat lagi.')
+      } else {
+        setError(err.message || 'Terjadi kesalahan')
+      }
     } finally {
       setLoading(false)
     }
@@ -174,18 +168,17 @@ export default function Login() {
         backdropFilter: 'blur(20px)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <span style={{ fontSize: '2.5rem' }}>⚡</span>
           <h1 style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: '1.8rem',
-            letterSpacing: '-0.02em',
+            fontFamily: 'var(--font-primary)',
+            fontWeight: 700,
+            fontSize: '2.2rem',
+            letterSpacing: '0.02em',
             marginTop: '0.5rem',
             marginBottom: '0.5rem'
           }}>
             Selamat <span style={{ color: 'var(--accent)' }}>Datang</span>
           </h1>
-          <p style={{ color: 'var(--text2)', fontSize: '0.875rem' }}>
+          <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text2)', fontSize: '0.9rem' }}>
             Masuk untuk menyimpan spesifikasi PC kamu
           </p>
         </div>
@@ -201,7 +194,7 @@ export default function Login() {
             marginBottom: '1.5rem',
             fontFamily: 'var(--font-mono)'
           }}>
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
@@ -232,14 +225,13 @@ export default function Login() {
               color: 'var(--text2)',
               textTransform: 'uppercase',
               marginBottom: 6
-            }}>Username</label>
+            }}>Username atau Email</label>
             <input
               type="text"
               name="username"
               value={form.username}
               onChange={handleChange}
-              onBlur={handleUsernameBlur}
-              placeholder="Masukkan username"
+              placeholder="Masukkan username atau email"
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -287,20 +279,22 @@ export default function Login() {
             />
           </div>
 
-          {/* Forgot Password — conditional */}
-          {showForgot && (
-            <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
-              <Link to="/forgot-password" style={{
-                color: 'var(--accent)',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                fontFamily: 'var(--font-mono)',
-              }}>
-                Lupa Password?
-              </Link>
-            </div>
-          )}
-          {!showForgot && <div style={{ marginBottom: '1rem' }} />}
+          {/* Forgot Password — selalu tampil */}
+          <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
+            <Link to="/forgot-password" style={{
+              color: 'var(--accent)',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              fontFamily: 'var(--font-mono)',
+              textDecoration: 'none',
+              transition: 'opacity 0.2s',
+            }}
+            onMouseEnter={e => e.target.style.opacity = '0.7'}
+            onMouseLeave={e => e.target.style.opacity = '1'}
+            >
+              Lupa Password?
+            </Link>
+          </div>
 
           <button
             type="submit"

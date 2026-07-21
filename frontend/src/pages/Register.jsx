@@ -6,7 +6,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 export default function Register() {
   const nav = useNavigate()
-  const [form, setForm] = useState({ username: '', password: '', confirmPassword: '' })
+  const [form, setForm] = useState({ username: '', email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
@@ -37,7 +37,11 @@ export default function Register() {
             if (!res.ok) throw new Error(data.error || 'Registrasi Google gagal')
             await handleGoogleSuccess(data.user)
           } catch (err) {
-            setError(err.message)
+            if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+              setError('Maaf, server sedang tidak dapat dihubungi. Silakan coba beberapa saat lagi.')
+            } else {
+              setError(err.message || 'Registrasi Google gagal')
+            }
           } finally {
             setLoading(false)
           }
@@ -76,8 +80,15 @@ export default function Register() {
     setError('')
     setSuccess('')
 
-    if (!form.username.trim() || !form.password.trim() || !form.confirmPassword.trim()) {
+    if (!form.username.trim() || !form.email.trim() || !form.password.trim() || !form.confirmPassword.trim()) {
       setError('Semua field wajib diisi')
+      return
+    }
+
+    // Validasi format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(form.email.trim())) {
+      setError('Format email tidak valid')
       return
     }
 
@@ -96,7 +107,7 @@ export default function Register() {
       const res = await fetch(`${API}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: form.username, password: form.password })
+        body: JSON.stringify({ username: form.username, email: form.email, password: form.password })
       })
       const data = await res.json()
       if (!res.ok) {
@@ -108,7 +119,11 @@ export default function Register() {
         nav('/login')
       }, 2000)
     } catch (err) {
-      setError(err.message)
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setError('Maaf, server sedang tidak dapat dihubungi. Silakan coba beberapa saat lagi.')
+      } else {
+        setError(err.message || 'Terjadi kesalahan')
+      }
     } finally {
       setLoading(false)
     }
@@ -130,18 +145,17 @@ export default function Register() {
         backdropFilter: 'blur(20px)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <span style={{ fontSize: '2.5rem' }}>✨</span>
           <h1 style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 800,
-            fontSize: '1.8rem',
-            letterSpacing: '-0.02em',
+            fontFamily: 'var(--font-primary)',
+            fontWeight: 700,
+            fontSize: '2.2rem',
+            letterSpacing: '0.02em',
             marginTop: '0.5rem',
             marginBottom: '0.5rem'
           }}>
             Buat <span style={{ color: 'var(--accent2)' }}>Akun</span> Baru
           </h1>
-          <p style={{ color: 'var(--text2)', fontSize: '0.875rem' }}>
+          <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text2)', fontSize: '0.9rem' }}>
             Simpan spesifikasi PC kamu setelah mendaftar
           </p>
         </div>
@@ -157,7 +171,7 @@ export default function Register() {
             marginBottom: '1.5rem',
             fontFamily: 'var(--font-mono)'
           }}>
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
@@ -172,7 +186,7 @@ export default function Register() {
             marginBottom: '1.5rem',
             fontFamily: 'var(--font-mono)'
           }}>
-            ✅ {success}
+            {success}
           </div>
         )}
 
@@ -224,6 +238,42 @@ export default function Register() {
               onFocus={e => e.target.style.borderColor = 'var(--accent2)'}
               onBlur={e => e.target.style.borderColor = 'var(--border)'}
             />
+          </div>
+
+          {/* Email field */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{
+              display: 'block',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.7rem',
+              letterSpacing: '0.1em',
+              color: 'var(--text2)',
+              textTransform: 'uppercase',
+              marginBottom: 6
+            }}>Email <span style={{ color: '#f87171' }}>*</span></label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="contoh@email.com"
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: 8,
+                background: 'var(--bg3)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+                fontSize: '0.9rem',
+                outline: 'none',
+                transition: 'border-color 0.2s'
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--accent2)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            />
+            <p style={{ margin: '4px 0 0 2px', fontSize: '0.72rem', color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>
+              Digunakan untuk reset password jika lupa
+            </p>
           </div>
 
           <div style={{ marginBottom: '1.25rem' }}>
@@ -294,11 +344,14 @@ export default function Register() {
             type="submit"
             disabled={loading}
             style={{
+              fontFamily: 'var(--font-primary)',
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
               width: '100%',
               background: 'linear-gradient(135deg, var(--accent2), #a78bfa)',
               color: '#000',
               fontWeight: 700,
-              fontSize: '0.95rem',
+              fontSize: '0.9rem',
               padding: '14px',
               borderRadius: 8,
               border: 'none',

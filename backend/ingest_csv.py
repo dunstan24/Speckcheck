@@ -7,11 +7,15 @@ import re
 import math
 import glob
 import mysql.connector
+from hardware_matcher import split_concatenated_specs
+
+from dotenv import load_dotenv
+load_dotenv()
 
 # Ambil konfigurasi database dari environment
 DB_HOST = os.getenv("DB_HOST", "127.0.0.1")  # Gunakan 127.0.0.1 jika dijalankan di host, db jika di container
 DB_USER = os.getenv("DB_USER", "speccheck")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "speccheck123")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "speccheck")
 
 def parse_cpu(cpu_str):
@@ -29,7 +33,10 @@ def parse_cpu(cpu_str):
     if match_mhz:
         return int(match_mhz.group(1))
         
-    # 3. Klasifikasi kata kunci arsitektur / tipe core
+    if "a8" in cpu_str_lower or "a10" in cpu_str_lower:
+        return 1600
+    if "a6" in cpu_str_lower or "a4" in cpu_str_lower:
+        return 1200
     if "quad" in cpu_str_lower or "4 core" in cpu_str_lower:
         return 2400
     if "dual" in cpu_str_lower or "2 core" in cpu_str_lower:
@@ -41,14 +48,20 @@ def parse_cpu(cpu_str):
     if "pentium iii" in cpu_str_lower or "pentium 3" in cpu_str_lower:
         return 800
         
-    # 4. Cari angka desimal/bulat pertama sebagai tebakan GHz/MHz
-    match_num = re.search(r'(\d+(?:\.\d+)?)', cpu_str)
+    # 4. Cari angka desimal/bulat pertama sebagai tebakan GHz/MHz (abaikan model number seperti i3, A8, X4)
+    # Kami hanya menebak GHz jika berupa bilangan desimal (memiliki titik desimal, misal 2.4) dan nilainya < 10.0.
+    # Kami hanya menebak MHz jika berupa bilangan bulat 3-digit atau 4-digit antara 100 dan 4000.
+    match_num = re.search(r'\b(\d+\.\d+|\d{3,4})\b', cpu_str)
     if match_num:
-        val = float(match_num.group(1))
-        if val < 10.0:  # Tebakan GHz
-            return int(val * 1000)
-        elif val >= 100.0:  # Tebakan MHz
-            return int(val)
+        val_str = match_num.group(1)
+        if "." in val_str:
+            val = float(val_str)
+            if val < 10.0:  # Tebakan GHz
+                return int(val * 1000)
+        else:
+            val = int(val_str)
+            if 100 <= val <= 4000:  # Tebakan MHz
+                return val
             
     return 1500  # Default fallback jika tidak ada angka sama sekali
 
@@ -254,19 +267,23 @@ def main():
         conn.close()
         return
 
-    # 1. Hapus semua game lama terlebih dahulu agar tidak duplikat
+    # 1. Ambil set nama game yang sudah ada di database untuk mencegah duplikasi (case-insensitive)
+    existing_games = set()
     try:
-        cursor.execute("DELETE FROM software WHERE cat = 'Game'")
-        conn.commit()
-        print("[INFO] Berhasil menghapus data game lama di database.")
+        cursor.execute("SELECT LOWER(name) FROM software")
+        for row in cursor.fetchall():
+            if row[0]:
+                existing_games.add(row[0].strip().lower())
+        print(f"[INFO] Ditemukan {len(existing_games)} game yang sudah ada di database.")
     except Exception as e:
-        print(f"[ERROR] Gagal menghapus game lama: {e}")
+        print(f"[ERROR] Gagal mengambil data game yang sudah ada: {e}")
         conn.close()
         return
 
     # 2. Baca SEMUA file CSV satu per satu
     games_inserted = 0
     games_skipped = 0
+    games_failed = 0
 
     insert_query = """
         INSERT INTO software (
@@ -300,16 +317,22 @@ def main():
                         # Truncate nama game agar muat di VARCHAR(500)
                         title = trunc(title, 499)
                         
+                        # Cek apakah game sudah ada di database untuk menghindari duplikasi
+                        if title.lower() in existing_games:
+                            games_skipped += 1
+                            continue
+                        existing_games.add(title.lower())
+                        
                         # Parsing spesifikasi numerik minimum — clamp agar tidak overflow INT
-                        min_cpu  = clamp_int(parse_cpu(row.get("CPU_Minimum", "")))
+                        min_cpu  = clamp_int(parse_cpu(split_concatenated_specs(row.get("CPU_Minimum", ""))))
                         min_ram  = clamp_int(parse_ram(row.get("RAM_Minimum", "")))
-                        min_vram = parse_vram(row.get("GPU_Minimum", ""))
+                        min_vram = parse_vram(split_concatenated_specs(row.get("GPU_Minimum", "")))
                         min_disk = clamp_int(parse_storage(row.get("Storage_Minimum", "")))
                         
                         # Parsing spesifikasi numerik rekomendasi
-                        rec_cpu  = clamp_int(parse_cpu(row.get("CPU_Recommended", "")))
+                        rec_cpu  = clamp_int(parse_cpu(split_concatenated_specs(row.get("CPU_Recommended", ""))))
                         rec_ram  = clamp_int(parse_ram(row.get("RAM_Recommended", "")))
-                        rec_vram = parse_vram(row.get("GPU_Recommended", ""))
+                        rec_vram = parse_vram(split_concatenated_specs(row.get("GPU_Recommended", "")))
                         rec_disk = clamp_int(parse_storage(row.get("Storage_Recommended", "")))
                         
                         # Bersihkan deskripsi "N/A"
@@ -343,7 +366,7 @@ def main():
                             file_count += 1
                         except Exception as e:
                             print(f"  - [WARNING] Gagal memasukkan game '{title}': {e}")
-                            games_skipped += 1
+                            games_failed += 1
 
                 conn.commit()
                 print(f"  -> {file_count} game diimpor dari file ini.")
@@ -351,9 +374,11 @@ def main():
             except Exception as e:
                 print(f"  [ERROR] Gagal membaca file {csv_file}: {e}")
 
-        print(f"\n[SUKSES] Total {games_inserted} game berhasil diimpor dari {len(csv_files)} file CSV!")
+        print(f"\n[SUKSES] Total {games_inserted} game baru berhasil diimpor dari {len(csv_files)} file CSV!")
         if games_skipped > 0:
-            print(f"[INFO] {games_skipped} baris dilewati karena error.")
+            print(f"[INFO] {games_skipped} game dilewati karena sudah ada di database.")
+        if games_failed > 0:
+            print(f"[INFO] {games_failed} game gagal diimpor karena error.")
         
     except Exception as e:
         print(f"[ERROR] Terjadi kesalahan fatal: {e}")
@@ -362,6 +387,14 @@ def main():
         cursor.close()
         conn.close()
         print("=== Proses Ingest Selesai ===")
+        
+        # Jalankan analisis PC tiers otomatis setelah ingest selesai agar data stats ter-update
+        try:
+            import analyze_tiers
+            analyze_tiers.main()
+        except Exception as tier_err:
+            print(f"[WARNING] Gagal menjalankan analisis PC tiers otomatis: {tier_err}")
 
 if __name__ == "__main__":
     main()
+

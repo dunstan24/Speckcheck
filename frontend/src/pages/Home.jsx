@@ -1,5 +1,7 @@
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import pcTiersData from '../data/pc_tiers.json'
+
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
@@ -13,21 +15,10 @@ const GRADE_DEFS = [
 
 export default function Home() {
   const nav = useNavigate()
-  const [gameCount, setGameCount] = useState(null)
   const [featuredGames, setFeaturedGames] = useState([])
   const [loadingFeatured, setLoadingFeatured] = useState(true)
 
   useEffect(() => {
-    // Fetch live game count (Optimized: fetch count only, not all records)
-    const loadGameCount = async () => {
-      try {
-        const res = await fetch(`${API}/api/software/count`)
-        const data = await res.json()
-        setGameCount(data.count)
-      } catch { setGameCount(null) }
-    }
-    loadGameCount()
-
     // Fetch featured games (Exactly 3 popular games)
     const loadFeaturedGames = async () => {
       try {
@@ -47,10 +38,10 @@ export default function Home() {
   const sectionTitle = (text, sub) => (
     <div style={{ marginBottom: '1.5rem' }}>
       <h2 style={{
-        fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.3rem',
+        fontFamily: 'var(--font-secondary)', fontWeight: 600, fontSize: '1.75rem',
         letterSpacing: '-0.01em', marginBottom: 4
       }}>{text}</h2>
-      {sub && <p style={{ color: 'var(--text3)', fontSize: '0.8rem' }}>{sub}</p>}
+      {sub && <p style={{ fontFamily: 'var(--font-body)', fontWeight: 400, color: 'var(--text2)', fontSize: '0.88rem', lineHeight: 1.5 }}>{sub}</p>}
     </div>
   )
 
@@ -60,33 +51,25 @@ export default function Home() {
       {/* ── 1. EXPLANATION SECTION (WHAT IS THIS WEBSITE) ── */}
       <section style={{
         textAlign: 'center',
-        marginBottom: '3rem',
+        marginBottom: '3.5rem',
         animation: 'fadeUp 0.5s ease',
       }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          background: 'var(--bg2)', border: '1px solid var(--border)',
-          borderRadius: 20, padding: '4px 14px', marginBottom: '1.25rem',
-          fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--text2)',
-        }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }}/>
-          {gameCount !== null ? `${gameCount.toLocaleString('id-ID')} Game Terdaftar` : 'Menganalisis Database...'}
-        </div>
 
         <h1 style={{
-          fontFamily: 'var(--font-display)', fontWeight: 800,
-          fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', lineHeight: 1.15,
-          letterSpacing: '-0.025em', marginBottom: '1rem',
+          fontFamily: 'var(--font-primary)', fontWeight: 700,
+          fontSize: 'clamp(2.2rem, 5vw, 3.8rem)', lineHeight: 1.1,
+          letterSpacing: '0.02em', marginBottom: '1.25rem',
         }}>
           Cek Kompatibilitas PC Kamu<br />
           <span style={{ color: 'var(--accent)' }}>Instan, Akurat, dan Cerdas.</span>
         </h1>
 
         <p style={{
-          fontSize: '0.92rem', color: 'var(--text2)', lineHeight: 1.7,
-          marginBottom: '2rem', maxWidth: 650, margin: '0 auto 2rem',
+          fontFamily: 'var(--font-body)', fontWeight: 400,
+          fontSize: '1rem', color: 'var(--text2)', lineHeight: 1.65,
+          marginBottom: '2rem', maxWidth: 680, margin: '0 auto 2rem',
         }}>
-          <strong>Bisa Main Nggak Ya</strong> membandingkan hardware PC Anda dengan database spesifikasi ribuan game secara real-time. 
+          <strong style={{ color: '#fff', fontWeight: 600 }}>Bisa main nggak?</strong> membandingkan hardware PC Anda dengan database spesifikasi ribuan game secara real-time. 
           Cari tahu apakah komputer Anda mampu menjalankan game impian Anda pada spesifikasi Minimum maupun Rekomendasi 
           sebelum membelinya.
         </p>
@@ -95,12 +78,15 @@ export default function Home() {
         <button
           onClick={() => nav('/test-pc')}
           style={{
+            fontFamily: 'var(--font-primary)',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
             background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
             color: '#000',
             border: 'none',
-            fontWeight: 800,
-            fontSize: '0.95rem',
-            padding: '12px 28px',
+            fontSize: '0.92rem',
+            padding: '14px 32px',
             borderRadius: 8,
             cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(229,184,66,0.25)',
@@ -133,15 +119,151 @@ export default function Home() {
               borderRadius: 10, padding: '1rem 0.75rem', textAlign: 'center',
             }}>
               <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: '1.8rem', fontWeight: 800,
+                fontFamily: 'var(--font-primary)', fontSize: '1.8rem', fontWeight: 800,
                 color: g.color, lineHeight: 1, marginBottom: 6,
               }}>{g.grade}</div>
-              <div style={{ fontWeight: 700, fontSize: '0.78rem', marginBottom: 4, color: g.color }}>{g.label}</div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--text2)', lineHeight: 1.4 }}>{g.desc}</div>
+              <div style={{ fontFamily: 'var(--font-secondary)', fontWeight: 600, fontSize: '0.82rem', marginBottom: 4, color: g.color }}>{g.label}</div>
+              <div style={{ fontFamily: 'var(--font-body)', fontSize: '0.72rem', color: 'var(--text2)', lineHeight: 1.4 }}>{g.desc}</div>
             </div>
           ))}
         </div>
       </section>
+
+      {/* ── 2b. PC TIERS RECOMMENDATIONS ── */}
+      <section style={{
+        marginBottom: '3.5rem',
+        animation: 'fadeUp 0.5s 0.25s ease both',
+        opacity: 0, animationFillMode: 'forwards',
+      }}>
+        {sectionTitle('Rekomendasi Spesifikasi PC', 'Pilih salah satu spesifikasi PC rekomendasi berdasarkan budget untuk melihat kemampuan bermain game')}
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '1.5rem'
+        }}>
+          {pcTiersData?.tiers?.map(tier => {
+            // Mapping specifications for navigation query params
+            const tierMapping = {
+              under_10m: { cpuVal: 4300, gpuVal: 8, cpuName: 'Intel Core i3-12100F', gpuName: 'NVIDIA GeForce GTX 1660 Super', ram: 16, disk: 512 },
+              around_10m: { cpuVal: 4400, gpuVal: 12, cpuName: 'AMD Ryzen 5 5600', gpuName: 'NVIDIA GeForce RTX 3060', ram: 16, disk: 1000 },
+              around_15m: { cpuVal: 5100, gpuVal: 8, cpuName: 'AMD Ryzen 5 7600', gpuName: 'NVIDIA GeForce RTX 4060 Ti', ram: 32, disk: 1000 }
+            }
+            const map = tierMapping[tier.id] || {}
+            
+            const testPCUrl = `/test-pc?cpuName=${encodeURIComponent(map.cpuName)}&cpu=${map.cpuVal}&gpuName=${encodeURIComponent(map.gpuName)}&ram=${map.ram}&disk=${map.disk}`
+            
+            const resultsUrl = `/results?cpuName=${encodeURIComponent(map.cpuName)}&cpu=${map.cpuVal}&gpuName=${encodeURIComponent(map.gpuName)}&ram=${map.ram}&disk=${map.disk}`
+
+            return (
+              <div key={tier.id} style={{
+                background: 'var(--bg2)',
+                border: '1px solid var(--border)',
+                borderRadius: 16,
+                padding: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = 'var(--accent)'
+                e.currentTarget.style.transform = 'translateY(-4px)'
+                e.currentTarget.style.boxShadow = '0 12px 24px rgba(229,184,66,0.1)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'var(--border)'
+                e.currentTarget.style.transform = 'none'
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)'
+              }}
+              >
+                {/* Header info */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                    <h3 style={{ fontFamily: 'var(--font-secondary)', fontSize: '1.2rem', fontWeight: 600, color: 'var(--text)' }}>
+                      {tier.name}
+                    </h3>
+                  </div>
+
+                  <div style={{
+                    fontFamily: 'var(--font-primary)',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: 'var(--accent)',
+                    background: 'rgba(229,184,66,0.08)',
+                    border: '1px solid rgba(229,184,66,0.15)',
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    display: 'inline-block',
+                    marginBottom: '1.25rem'
+                  }}>
+                    {tier.price_range}
+                  </div>
+
+                  {/* Spec List */}
+                  <div style={{
+                    background: 'var(--bg3)',
+                    borderRadius: 10,
+                    padding: '0.85rem',
+                    marginBottom: '1.5rem',
+                    border: '1px solid var(--border)'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.82rem', fontFamily: 'var(--font-body)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text3)' }}>Processor</span>
+                        <span style={{ fontWeight: 500, color: 'var(--text2)', textAlign: 'right' }}>{tier.specs.cpu}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text3)' }}>VGA Card</span>
+                        <span style={{ fontWeight: 500, color: 'var(--text2)', textAlign: 'right' }}>{tier.specs.gpu}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text3)' }}>RAM</span>
+                        <span style={{ fontWeight: 500, color: 'var(--text2)', textAlign: 'right' }}>{tier.specs.ram}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text3)' }}>Storage</span>
+                        <span style={{ fontWeight: 500, color: 'var(--text2)', textAlign: 'right' }}>{tier.specs.storage}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Buttons */}
+                <div style={{ marginTop: '0.5rem' }}>
+                  <button
+                    onClick={() => nav(resultsUrl)}
+                    style={{
+                      fontFamily: 'var(--font-primary)',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      width: '100%',
+                      background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
+                      color: '#000',
+                      border: 'none',
+                      borderRadius: 8,
+                      padding: '10px 8px',
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 2px 8px rgba(229,184,66,0.15)',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-0.5px)' }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'none' }}
+                  >
+                    Cek Kompatibilitas →
+                  </button>
+                </div>
+              </div>
+
+            )
+          })}
+        </div>
+      </section>
+
 
       {/* ── 3. FEATURED FAMOUS GAMES (3 POPULAR GAMES) ── */}
       <section style={{
@@ -149,7 +271,7 @@ export default function Home() {
         animation: 'fadeUp 0.5s 0.3s ease both',
         opacity: 0, animationFillMode: 'forwards',
       }}>
-        {sectionTitle('🎮 Game Populer', 'Pilih salah satu game ternama di bawah untuk langsung mengecek performanya di spesifikasi Anda')}
+        {sectionTitle('Game Populer', 'Pilih salah satu game ternama di bawah untuk langsung mengecek performanya di spesifikasi Anda')}
 
         {loadingFeatured ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.25rem' }}>

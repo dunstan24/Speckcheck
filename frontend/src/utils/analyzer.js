@@ -1,4 +1,4 @@
-import { matchCpu, matchGpu } from './hardwareMatcher'
+import { matchCpu, matchGpu, resolveGameRequirement, mhzToScore } from './hardwareMatcher'
 
 export function normalizeSpec(spec) {
   return {
@@ -21,11 +21,23 @@ export function analyzeOne(spec, sw) {
   const userCpuScore = cpuMatch.score
   const userGpuScore = gpuMatch.score
 
-  // Game requirement scores (backend sets gpu_score; fallback: vram * 3000)
-  const minCpu = sw.min.cpu || 0
-  const recCpu = sw.rec.cpu || 0
-  const minGpu = sw.min.gpu_score ?? (sw.min.vram * 3000)
-  const recGpu = sw.rec.gpu_score ?? (sw.rec.vram * 3000)
+  // Resolve game CPU/GPU requirement strings or fallback to DB numeric
+  let minCpu = 0
+  let recCpu = 0
+  let minGpu = sw.min.gpu_score ?? (sw.min.vram * 3000)
+  let recGpu = sw.rec.gpu_score ?? (sw.rec.vram * 3000)
+
+  if (sw.raw && (sw.raw.cpu_min || sw.raw.gpu_min || sw.raw.cpu_rec || sw.raw.gpu_rec)) {
+    const minResolved = resolveGameRequirement(sw.raw.cpu_min, sw.raw.gpu_min)
+    const recResolved = resolveGameRequirement(sw.raw.cpu_rec, sw.raw.gpu_rec)
+    minCpu = minResolved.cpuScore || mhzToScore(sw.min.cpu)
+    minGpu = minResolved.gpuScore || minGpu
+    recCpu = recResolved.cpuScore || mhzToScore(sw.rec.cpu)
+    recGpu = recResolved.gpuScore || recGpu
+  } else {
+    minCpu = mhzToScore(sw.min.cpu)
+    recCpu = mhzToScore(sw.rec.cpu)
+  }
 
   const checks = [
     ['CPU',     userCpuScore, minCpu, recCpu],
@@ -44,7 +56,7 @@ export function analyzeOne(spec, sw) {
 
     if (mn === 0 && rec === 0) {
       status = 'unknown'; score = 25; pct = 100; unknownCount++
-    } else if (rec > 0 && user >= rec) {
+    } else if ((rec > 0 && user >= rec) || (rec === 0 && mn > 0 && user >= mn)) {
       status = 'optimal'; score = 25; pct = 100
     } else if (mn > 0 && user >= mn) {
       status = 'minimum'; score = 15

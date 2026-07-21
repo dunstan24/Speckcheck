@@ -11,6 +11,7 @@ import Profile from './pages/Profile'
 import AdminDashboard from './pages/AdminDashboard'
 import HardwareHierarchy from './pages/HardwareHierarchy'
 import TestPC from './pages/TestPC'
+import Trending from './pages/Trending'
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/admin"    element={<AdminDashboard />} />
           <Route path="/hardware" element={<HardwareHierarchy />} />
           <Route path="/test-pc"  element={<TestPC />} />
+          <Route path="/trending" element={<Trending />} />
         </Routes>
       </div>
     </div>

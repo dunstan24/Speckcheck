@@ -5,21 +5,27 @@ services:
     image: mysql:8.0
     container_name: speccheck_db
     restart: unless-stopped
+    command: --performance_schema=OFF --innodb_buffer_pool_size=128M --max_connections=50
+    env_file:
+      - ./backend/.env
     environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: speccheck
-      MYSQL_USER: speccheck
-      MYSQL_PASSWORD: speccheck123
-    ports:
-      - "3306:3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-R00t@M4sT3r#2026!zX9wLpN}
+      MYSQL_DATABASE: ${DB_NAME:-speccheck}
+      MYSQL_USER: ${DB_USER:-speccheck}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-Sp3cCh3ck@Db#2026!xK9mPqR7}
+    # Port 3306 TIDAK di-expose ke publik (hanya bisa diakses oleh backend container)
+    # Uncomment baris ini HANYA jika kamu perlu koneksi dari luar Docker (misal: MySQL Workbench)
+    # ports:
+    #   - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql                              # data MySQL tersimpan permanen
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql  # seed data otomatis
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "speccheck", "--password=speccheck123"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "speccheck", "--password=Sp3cCh3ck@Db#2026!xK9mPqR7"]
       interval: 10s
       timeout: 5s
       retries: 10
+      # NOTE: healthcheck password above must match DB_PASSWORD in backend/.env
 
   # ── 2. BACKEND (Flask) ────────────────────────────────────────
   backend:
@@ -37,6 +43,8 @@ services:
       - ./backend:/app               # hot-reload: edit app.py langsung terbaca
       - ./detector:/detector         # agar file detector bisa di-download via Docker
       - ./data:/data                 # agar data CSV pcgamingwiki terbaca oleh backend
+      - ./frontend/src/data:/frontend_data # mount frontend data dir untuk analysis output
+
 
   # ── 3. FRONTEND (Vite + React) ────────────────────────────────
   frontend:

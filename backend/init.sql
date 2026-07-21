@@ -23,7 +23,9 @@ CREATE TABLE IF NOT EXISTS software (
   raw_cpu_min     VARCHAR(255) NULL,
   raw_gpu_min     VARCHAR(255) NULL,
   raw_cpu_rec     VARCHAR(255) NULL,
-  raw_gpu_rec     VARCHAR(255) NULL
+  raw_gpu_rec     VARCHAR(255) NULL,
+  INDEX idx_sw_cat_url_name (cat, url(100), name),
+  INDEX idx_sw_name (name)
 );
 
 -- Hapus data lama jika ada (untuk re-seed)

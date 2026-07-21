@@ -15,8 +15,14 @@
   --orange: #f97316;
   --red: #ef4444;
   --cyan: #06b6d4;
-  --font-display: 'Syne', sans-serif;
-  --font-mono: 'Space Mono', monospace;
+
+  /* ── TYPOGRAPHY SYSTEM ──────────────────────────────────────────────────── */
+  --font-primary: 'Oxanium', sans-serif;       /* Hero titles, main branding, CTA buttons, highlights */
+  --font-secondary: 'Space Grotesk', sans-serif; /* Section headings, card titles, UI headings */
+  --font-body: 'Inter', sans-serif;            /* Descriptions, paragraphs, PC specs, tables, info */
+  --font-mono: 'Space Mono', monospace;        /* Code, IDs, raw numbers */
+  
+  --font-display: var(--font-primary);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,9 +30,13 @@
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body::before {
@@ -44,15 +54,55 @@ body::before {
 
 a { color: inherit; text-decoration: none; }
 
-button {
-  cursor: pointer;
-  font-family: var(--font-display);
-  border: none;
-  outline: none;
+/* ── TYPOGRAPHY UTILITY CLASSES & BASE HIERARCHY ──────────────────────────── */
+
+/* Hero Title: Oxanium Bold (700) */
+h1, .hero-title, .brand-logo {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
 }
 
-input, select {
-  font-family: var(--font-mono);
+/* Section Headings & Card Titles: Space Grotesk SemiBold (600) */
+h2, .section-heading, .section-title {
+  font-family: var(--font-secondary);
+  font-weight: 600;
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+h3, h4, .card-title, .ui-heading {
+  font-family: var(--font-secondary);
+  font-weight: 600;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  line-height: 1.3;
+}
+
+/* Body Text & Specifications: Inter Regular (400) / Medium (500) */
+p, span, td, label, .body-text, .spec-text {
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+nav, .nav-link {
+  font-family: var(--font-body);
+  font-weight: 500;
+}
+
+/* CTA Buttons: Oxanium Bold (700) with medium letter spacing */
+button, .btn-cta, .btn-primary {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: var(--font-body);
   background: var(--bg3);
   border: 1px solid var(--border);
   color: var(--text);
@@ -63,10 +113,10 @@ input, select {
   transition: border-color 0.2s;
 }
 
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(0,212,255,0.15);
+  box-shadow: 0 0 0 2px rgba(229,184,66,0.18);
 }
 
 ::-webkit-scrollbar { width: 6px; }
@@ -86,8 +136,8 @@ input:focus, select:focus {
   100% { transform: translateY(100vh); }
 }
 @keyframes glow {
-  0%, 100% { box-shadow: 0 0 10px rgba(0,212,255,0.3); }
-  50%       { box-shadow: 0 0 25px rgba(0,212,255,0.6); }
+  0%, 100% { box-shadow: 0 0 10px rgba(229,184,66,0.3); }
+  50%       { box-shadow: 0 0 25px rgba(229,184,66,0.6); }
 }
 
 /* Layout with character wallpapers on the sides */
@@ -153,4 +203,3 @@ input:focus, select:focus {
     -webkit-backdrop-filter: none;
   }
 }
-

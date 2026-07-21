@@ -50,7 +50,11 @@ export default function ResetPassword() {
       setSuccess(true)
       setTimeout(() => nav('/login'), 3000)
     } catch (err) {
-      setError(err.message)
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setError('Maaf, server sedang tidak dapat dihubungi. Silakan coba beberapa saat lagi.')
+      } else {
+        setError(err.message || 'Terjadi kesalahan')
+      }
     } finally {
       setLoading(false)
     }
@@ -72,7 +76,6 @@ export default function ResetPassword() {
         backdropFilter: 'blur(20px)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <span style={{ fontSize: '2.5rem' }}>🔐</span>
           <h1 style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 800,
@@ -99,7 +102,7 @@ export default function ResetPassword() {
             marginBottom: '1.5rem',
             fontFamily: 'var(--font-mono)'
           }}>
-            ⚠️ {error}
+            {error}
           </div>
         )}
 
@@ -115,7 +118,7 @@ export default function ResetPassword() {
             textAlign: 'center',
             lineHeight: 1.6,
           }}>
-            ✅ Password berhasil direset! Anda akan diarahkan ke halaman login...
+            Password berhasil direset! Anda akan diarahkan ke halaman login...
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
@@ -200,7 +203,7 @@ export default function ResetPassword() {
               onMouseEnter={e => e.target.style.transform = 'translateY(-1px)'}
               onMouseLeave={e => e.target.style.transform = 'translateY(0)'}
             >
-              {loading ? '⏳ Memproses...' : 'Simpan Password Baru →'}
+              {loading ? 'Memproses...' : 'Simpan Password Baru →'}
             </button>
           </form>
         )}

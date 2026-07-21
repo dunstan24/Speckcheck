@@ -73,7 +73,7 @@ function HardwareCard({ item, max, type, selected, onSelect }) {
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontFamily: 'var(--font-secondary)', fontSize: '0.92rem', fontWeight: 600, color: 'var(--text)', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {item.name}
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -133,8 +133,8 @@ function ComparePanel({ a, b, type, max }) {
       padding: '1.5rem',
       marginBottom: '2rem',
     }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--accent)', letterSpacing: '0.1em', marginBottom: '1rem' }}>
-        ⚡ PERBANDINGAN {items.length === 2 ? '— HEAD TO HEAD' : '— PILIH SATU LAGI'}
+      <div style={{ fontFamily: 'var(--font-secondary)', fontWeight: 600, fontSize: '0.85rem', color: 'var(--accent)', letterSpacing: '0.05em', marginBottom: '1rem' }}>
+        PERBANDINGAN {items.length === 2 ? '— HEAD TO HEAD' : '— PILIH SATU LAGI'}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: items.length === 2 ? '1fr auto 1fr' : '1fr', gap: '1rem', alignItems: 'center' }}>
         {items.length === 2 ? (
@@ -166,8 +166,8 @@ function CompareCard({ item, max, type, side, winner }) {
       borderRadius: 10, padding: '1rem',
       textAlign: side === 'right' ? 'right' : 'left',
     }}>
-      {winner && <div style={{ fontSize: '0.65rem', color: tier.color, fontWeight: 700, marginBottom: 6 }}>🏆 LEBIH CEPAT</div>}
-      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text)', marginBottom: 4 }}>{item.name}</div>
+      {winner && <div style={{ fontSize: '0.65rem', color: tier.color, fontWeight: 700, marginBottom: 6 }}>LEBIH CEPAT</div>}
+      <div style={{ fontFamily: 'var(--font-secondary)', fontWeight: 600, fontSize: '0.95rem', color: 'var(--text)', marginBottom: 4 }}>{item.name}</div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.4rem', fontWeight: 900, color: tier.color, marginBottom: 6 }}>
         {pct}%
       </div>
@@ -254,7 +254,9 @@ export default function HardwareHierarchy() {
   }
 
   const btnStyle = (active) => ({
-    padding: '7px 18px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700,
+    fontFamily: 'var(--font-primary)',
+    letterSpacing: '0.04em',
+    padding: '8px 22px', borderRadius: 8, fontSize: '0.85rem', fontWeight: 700,
     cursor: 'pointer', transition: 'all 0.15s',
     background: active ? 'linear-gradient(135deg, var(--accent), var(--accent2))' : 'var(--bg2)',
     border: `1px solid ${active ? 'transparent' : 'var(--border)'}`,
@@ -270,11 +272,11 @@ export default function HardwareHierarchy() {
           letterSpacing: '0.15em', color: 'var(--accent)', textTransform: 'uppercase',
           background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)',
           borderRadius: 100, padding: '4px 16px', marginBottom: 16,
-        }}>🔬 Hardware Performance Database</div>
-        <h1 style={{ fontWeight: 900, fontSize: '2.4rem', letterSpacing: '-0.03em', marginBottom: 12 }}>
+        }}>Hardware Performance Database</div>
+        <h1 style={{ fontFamily: 'var(--font-primary)', fontWeight: 700, fontSize: 'clamp(2rem, 4vw, 2.8rem)', letterSpacing: '0.02em', marginBottom: 12 }}>
           CPU & GPU <span style={{ color: 'var(--accent)' }}>Hierarchy</span>
         </h1>
-        <p style={{ color: 'var(--text2)', fontSize: '0.95rem', maxWidth: 560, margin: '0 auto' }}>
+        <p style={{ fontFamily: 'var(--font-body)', fontWeight: 400, color: 'var(--text2)', fontSize: '0.95rem', maxWidth: 560, margin: '0 auto' }}>
           Database lengkap dari era 2000 hingga 2025. Klik kartu untuk membandingkan hingga 2 hardware secara head-to-head.
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
@@ -288,8 +290,8 @@ export default function HardwareHierarchy() {
 
       {/* Tab */}
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: '2rem' }}>
-        <button id="tab-gpu" style={btnStyle(tab === 'gpu')} onClick={() => { setTab('gpu'); setSelectedA(null); setSelectedB(null); setSearch(''); setBrandFilter('All') }}>🎴 GPU</button>
-        <button id="tab-cpu" style={btnStyle(tab === 'cpu')} onClick={() => { setTab('cpu'); setSelectedA(null); setSelectedB(null); setSearch(''); setBrandFilter('All') }}>🖥 CPU</button>
+        <button id="tab-gpu" style={btnStyle(tab === 'gpu')} onClick={() => { setTab('gpu'); setSelectedA(null); setSelectedB(null); setSearch(''); setBrandFilter('All') }}>GPU</button>
+        <button id="tab-cpu" style={btnStyle(tab === 'cpu')} onClick={() => { setTab('cpu'); setSelectedA(null); setSelectedB(null); setSearch(''); setBrandFilter('All') }}>CPU</button>
       </div>
 
       {/* Compare Panel */}

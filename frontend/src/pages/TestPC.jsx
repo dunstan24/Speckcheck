@@ -5,13 +5,16 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const cpuOptions = [
   { label: 'Intel Core i3-10100 (4C/8T) ~3400 MHz', value: 3400, name: 'Intel Core i3-10100' },
+  { label: 'Intel Core i3-12100F (4C/8T) ~4300 MHz', value: 4300, name: 'Intel Core i3-12100F' },
   { label: 'Intel Core i5-10400 (6C/12T) ~4300 MHz', value: 4300, name: 'Intel Core i5-10400' },
   { label: 'Intel Core i5-12600K (10C) ~4900 MHz', value: 4900, name: 'Intel Core i5-12600K' },
   { label: 'Intel Core i7-10700K (8C/16T) ~5100 MHz', value: 5100, name: 'Intel Core i7-10700K' },
   { label: 'Intel Core i7-13700K (16C) ~5400 MHz', value: 5400, name: 'Intel Core i7-13700K' },
   { label: 'Intel Core i9-13900K (24C) ~5800 MHz', value: 5800, name: 'Intel Core i9-13900K' },
   { label: 'AMD Ryzen 3 3300X (4C/8T) ~3800 MHz', value: 3800, name: 'AMD Ryzen 3 3300X' },
+  { label: 'AMD Ryzen 5 5600 (6C/12T) ~4400 MHz', value: 4400, name: 'AMD Ryzen 5 5600' },
   { label: 'AMD Ryzen 5 5600X (6C/12T) ~4600 MHz', value: 4600, name: 'AMD Ryzen 5 5600X' },
+  { label: 'AMD Ryzen 5 7600 (6C/12T) ~5100 MHz', value: 5100, name: 'AMD Ryzen 5 7600' },
   { label: 'AMD Ryzen 7 5800X (8C/16T) ~4700 MHz', value: 4700, name: 'AMD Ryzen 7 5800X' },
   { label: 'AMD Ryzen 9 5900X (12C) ~4800 MHz', value: 4800, name: 'AMD Ryzen 9 5900X' },
   { label: 'AMD Ryzen 9 7950X (16C) ~5700 MHz', value: 5700, name: 'AMD Ryzen 9 7950X' },
@@ -29,6 +32,7 @@ const gpuOptions = [
   { label: 'NVIDIA RTX 3060 12 GB VRAM', value: 12, name: 'NVIDIA GeForce RTX 3060' },
   { label: 'NVIDIA RTX 3070 8 GB VRAM', value: 8, name: 'NVIDIA GeForce RTX 3070' },
   { label: 'NVIDIA RTX 3080 10 GB VRAM', value: 10, name: 'NVIDIA GeForce RTX 3080' },
+  { label: 'NVIDIA RTX 4060 Ti 8 GB VRAM', value: 8, name: 'NVIDIA GeForce RTX 4060 Ti' },
   { label: 'NVIDIA RTX 4070 12 GB VRAM', value: 12, name: 'NVIDIA GeForce RTX 4070' },
   { label: 'NVIDIA RTX 4090 24 GB VRAM', value: 24, name: 'NVIDIA GeForce RTX 4090' },
   { label: 'AMD RX 570 4 GB VRAM', value: 4, name: 'AMD Radeon RX 570' },
@@ -59,6 +63,25 @@ export default function TestPC() {
 
     // Load spec
     const loadSpec = async () => {
+      // Check query params first
+      const params = new URLSearchParams(window.location.search)
+      const qCpuName = params.get('cpuName')
+      const qGpuName = params.get('gpuName')
+      const qRam = params.get('ram')
+      const qDisk = params.get('disk')
+      if (qCpuName || qGpuName || qRam || qDisk) {
+        setSavedSpec({
+          cpuName: qCpuName || '',
+          gpuName: qGpuName || '',
+          ram: qRam || '',
+          disk: qDisk || '',
+          cpu: params.get('cpu') || 0,
+          vram: params.get('vram') || 0,
+          os: 'Windows'
+        })
+        return
+      }
+
       if (userStr) {
         try {
           const u = JSON.parse(userStr)
@@ -80,14 +103,46 @@ export default function TestPC() {
         } catch (err) {
           console.error('Failed to fetch spec from DB:', err)
         }
+        try {
+          const spec = localStorage.getItem('user_spec')
+          if (spec) setSavedSpec(JSON.parse(spec))
+        } catch {}
       }
-      try {
-        const spec = localStorage.getItem('user_spec')
-        if (spec) setSavedSpec(JSON.parse(spec))
-      } catch {}
     }
     loadSpec()
   }, [])
+
+
+  useEffect(() => {
+    if (savedSpec) {
+      // Cari CPU idx
+      let cpuIdx = '';
+      if (savedSpec.cpuName) {
+        cpuIdx = cpuOptions.findIndex(opt => opt.name === savedSpec.cpuName || opt.label.includes(savedSpec.cpuName));
+      }
+      if (cpuIdx === -1 || cpuIdx === '') {
+        cpuIdx = cpuOptions.findIndex(opt => opt.value === Number(savedSpec.cpu));
+      }
+      if (cpuIdx === -1) cpuIdx = '';
+
+      // Cari GPU idx
+      let gpuIdx = '';
+      if (savedSpec.gpuName) {
+        gpuIdx = gpuOptions.findIndex(opt => opt.name === savedSpec.gpuName || opt.label.includes(savedSpec.gpuName));
+      }
+      if (gpuIdx === -1 || gpuIdx === '') {
+        gpuIdx = gpuOptions.findIndex(opt => opt.value === Number(savedSpec.vram));
+      }
+      if (gpuIdx === -1) gpuIdx = '';
+
+      setForm({
+        cpuIdx: String(cpuIdx),
+        gpuIdx: String(gpuIdx),
+        ram: String(savedSpec.ram || ''),
+        disk: String(savedSpec.disk || ''),
+      });
+    }
+  }, [savedSpec])
 
   const handleDownload = async () => {
     setDownloading(true)
@@ -139,19 +194,18 @@ export default function TestPC() {
     const cpuNameVal = selectedCpu.name
     const gpuNameVal = selectedGpu.name
 
-    // Save locally
-    localStorage.setItem('user_spec', JSON.stringify({
-      cpu: cpuVal,
-      ram: ramVal,
-      vram: vramVal,
-      disk: diskVal,
-      cpuName: cpuNameVal,
-      gpuName: gpuNameVal,
-      os: 'Windows'
-    }))
-
-    // Save to DB if logged in
+    // Save to DB and local storage if logged in
     if (user) {
+      localStorage.setItem('user_spec', JSON.stringify({
+        cpu: cpuVal,
+        ram: ramVal,
+        vram: vramVal,
+        disk: diskVal,
+        cpuName: cpuNameVal,
+        gpuName: gpuNameVal,
+        os: 'Windows'
+      }))
+
       fetch(`${API}/api/user/spec`, {
         method: 'POST',
         headers: {
@@ -189,15 +243,16 @@ export default function TestPC() {
         animation: 'fadeUp 0.5s ease',
       }}>
         <h1 style={{
-          fontFamily: 'var(--font-display)', fontWeight: 800,
-          fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', lineHeight: 1.15,
-          letterSpacing: '-0.025em', marginBottom: '1rem',
+          fontFamily: 'var(--font-primary)', fontWeight: 700,
+          fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)', lineHeight: 1.1,
+          letterSpacing: '0.02em', marginBottom: '1rem',
         }}>
-          🔬 Test Your <span style={{ color: 'var(--accent)' }}>PC Spec</span>
+          Test Your <span style={{ color: 'var(--accent)' }}>PC Spec</span>
         </h1>
         <p style={{
-          fontSize: '0.92rem', color: 'var(--text2)', lineHeight: 1.7,
-          maxWidth: 650, margin: '0 auto',
+          fontFamily: 'var(--font-body)', fontWeight: 400,
+          fontSize: '0.98rem', color: 'var(--text2)', lineHeight: 1.65,
+          maxWidth: 680, margin: '0 auto',
         }}>
           Pilih salah satu metode di bawah untuk menganalisis kecocokan spesifikasi PC Anda dengan ribuan game. Anda bisa mendeteksi secara otomatis atau memasukkan komponen secara manual.
         </p>
@@ -226,16 +281,17 @@ export default function TestPC() {
             flexWrap: 'wrap',
             gap: 12
           }}>
-            <div style={{ fontSize: '0.85rem' }}>
-              <span style={{ color: '#10b981', fontWeight: 700 }}>✓ Spesifikasi Tersimpan:</span> {savedSpec.cpuName} | {savedSpec.gpuName} | {savedSpec.ram}GB RAM
+            <div style={{ fontSize: '0.85rem', fontFamily: 'var(--font-body)' }}>
+              <span style={{ color: '#10b981', fontWeight: 600 }}>Spesifikasi Tersimpan:</span> {savedSpec.cpuName} | {savedSpec.gpuName} | {savedSpec.ram}GB RAM
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={handleRunSavedSpec} style={{
+                fontFamily: 'var(--font-primary)', letterSpacing: '0.04em', textTransform: 'uppercase',
                 background: 'var(--accent)', color: '#000', border: 'none',
                 fontWeight: 700, fontSize: '0.78rem', padding: '6px 14px', borderRadius: 4, cursor: 'pointer'
               }}>Gunakan Spesifikasi Ini</button>
               <button onClick={() => { localStorage.removeItem('user_spec'); setSavedSpec(null) }} style={{
-                background: 'transparent', color: 'var(--text3)', border: 'none',
+                fontFamily: 'var(--font-body)', background: 'transparent', color: 'var(--text3)', border: 'none',
                 fontSize: '0.78rem', cursor: 'pointer'
               }}>Hapus</button>
             </div>
@@ -261,10 +317,9 @@ export default function TestPC() {
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.75rem' }}>
-                <span style={{ fontSize: '1.25rem' }}>⚡</span>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Deteksi Otomatis</h3>
+                <h3 style={{ fontFamily: 'var(--font-secondary)', fontSize: '1.15rem', fontWeight: 600 }}>Deteksi Otomatis</h3>
               </div>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text2)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', color: 'var(--text2)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                 Gunakan aplikasi detektor ringan kami (.exe) untuk memindai spesifikasi hardware PC Anda secara otomatis dalam 1 detik. Aman, portabel, tanpa instalasi.
               </p>
               <div style={{ fontSize: '0.72rem', color: 'var(--text3)', fontFamily: 'var(--font-mono)', marginBottom: '1.5rem' }}>
@@ -278,6 +333,9 @@ export default function TestPC() {
               onClick={handleDownload}
               disabled={downloading}
               style={{
+                fontFamily: 'var(--font-primary)',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
                 width: '100%',
                 background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
                 color: '#000',
@@ -293,7 +351,7 @@ export default function TestPC() {
               onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
-              {downloading ? '⏳ Mengunduh...' : '↓ Download Detector (.exe)'}
+              {downloading ? '⏳ Mengunduh...' : 'Download Detector (.exe)'}
             </button>
           </div>
 
@@ -305,20 +363,19 @@ export default function TestPC() {
             padding: '1.5rem',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>✍</span>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 700 }}>Input Manual</h3>
+              <h3 style={{ fontFamily: 'var(--font-secondary)', fontSize: '1.15rem', fontWeight: 600 }}>Input Manual</h3>
             </div>
 
             {/* CPU Selection */}
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 6 }}>Prosesor (CPU)</label>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontFamily: 'var(--font-body)', fontWeight: 500, color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 6 }}>Prosesor (CPU)</label>
               <select
                 required
                 value={form.cpuIdx}
                 onChange={e => setForm(f => ({ ...f, cpuIdx: e.target.value }))}
                 style={{
                   width: '100%', padding: '10px', background: 'var(--bg)', border: '1px solid var(--border)',
-                  borderRadius: 6, color: 'var(--text)', fontSize: '0.82rem', outline: 'none'
+                  borderRadius: 6, color: 'var(--text)', fontSize: '0.82rem', outline: 'none', fontFamily: 'var(--font-body)'
                 }}
               >
                 <option value="">-- Pilih CPU --</option>
@@ -330,14 +387,14 @@ export default function TestPC() {
 
             {/* GPU Selection */}
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 6 }}>Kartu Grafis (GPU)</label>
+              <label style={{ display: 'block', fontSize: '0.72rem', fontFamily: 'var(--font-body)', fontWeight: 500, color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 6 }}>Kartu Grafis (GPU)</label>
               <select
                 required
                 value={form.gpuIdx}
                 onChange={e => setForm(f => ({ ...f, gpuIdx: e.target.value }))}
                 style={{
                   width: '100%', padding: '10px', background: 'var(--bg)', border: '1px solid var(--border)',
-                  borderRadius: 6, color: 'var(--text)', fontSize: '0.82rem', outline: 'none'
+                  borderRadius: 6, color: 'var(--text)', fontSize: '0.82rem', outline: 'none', fontFamily: 'var(--font-body)'
                 }}
               >
                 <option value="">-- Pilih GPU --</option>
@@ -350,7 +407,7 @@ export default function TestPC() {
             {/* RAM & Disk Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 6 }}>Memori RAM (GB)</label>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontFamily: 'var(--font-body)', fontWeight: 500, color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 6 }}>Memori RAM (GB)</label>
                 <input
                   required
                   type="number"
@@ -361,12 +418,12 @@ export default function TestPC() {
                   onChange={e => setForm(f => ({ ...f, ram: e.target.value }))}
                   style={{
                     width: '100%', padding: '10px', background: 'var(--bg)', border: '1px solid var(--border)',
-                    borderRadius: 6, color: 'var(--text)', fontSize: '0.82rem', outline: 'none'
+                    borderRadius: 6, color: 'var(--text)', fontSize: '0.82rem', outline: 'none', fontFamily: 'var(--font-body)'
                   }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 6 }}>Storage Tersedia (GB)</label>
+                <label style={{ display: 'block', fontSize: '0.72rem', fontFamily: 'var(--font-body)', fontWeight: 500, color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 6 }}>Storage Tersedia (GB)</label>
                 <input
                   required
                   type="number"
@@ -377,7 +434,7 @@ export default function TestPC() {
                   onChange={e => setForm(f => ({ ...f, disk: e.target.value }))}
                   style={{
                     width: '100%', padding: '10px', background: 'var(--bg)', border: '1px solid var(--border)',
-                    borderRadius: 6, color: 'var(--text)', fontSize: '0.82rem', outline: 'none'
+                    borderRadius: 6, color: 'var(--text)', fontSize: '0.82rem', outline: 'none', fontFamily: 'var(--font-body)'
                   }}
                 />
               </div>
@@ -386,6 +443,9 @@ export default function TestPC() {
             <button
               type="submit"
               style={{
+                fontFamily: 'var(--font-primary)',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
                 width: '100%',
                 background: 'var(--accent)',
                 color: '#000',

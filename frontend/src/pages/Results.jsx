@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
-import softwareList from "../data/software";
-import {
-  analyzeSoftware,
-  calculateStats,
-  normalizeSpec,
-} from "../utils/analyzer";
+import { normalizeSpec } from "../utils/analyzer";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -15,12 +10,12 @@ const proxyImageUrl = (url) => {
 };
 
 const GRADE_INFO = {
-  "?": { emoji: "❓", label: "Data Belum Tersedia", color: "#94a3b8" },
-  S: { emoji: "🏆", label: "Sangat Optimal", color: "#22d3ee" },
-  A: { emoji: "✅", label: "Direkomendasikan", color: "#4ade80" },
-  B: { emoji: "⚠️", label: "Bisa (Minimum)", color: "#fbbf24" },
-  C: { emoji: "⚡", label: "Di Bawah Minimum", color: "#fb923c" },
-  D: { emoji: "❌", label: "Tidak Bisa", color: "#f87171" },
+  "?": { emoji: "", label: "Data Belum Tersedia", color: "#94a3b8" },
+  S: { emoji: "", label: "Sangat Optimal", color: "#22d3ee" },
+  A: { emoji: "", label: "Direkomendasikan", color: "#4ade80" },
+  B: { emoji: "", label: "Bisa (Minimum)", color: "#fbbf24" },
+  C: { emoji: "", label: "Di Bawah Minimum", color: "#fb923c" },
+  D: { emoji: "", label: "Tidak Bisa", color: "#f87171" },
 };
 
 const cats = ["Semua", "Game"];
@@ -99,11 +94,21 @@ function SoftwareCard({ sw, onNavigate, isSpecAvailable }) {
               }}
             />
           ) : (
-            <span style={{ fontSize: "1.6rem", flexShrink: 0, width: 40, textAlign: "center" }}>🎮</span>
+            <div style={{
+              width: 40,
+              height: 54,
+              borderRadius: 6,
+              background: "var(--bg3)",
+              border: "1px solid var(--border)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0
+            }} />
           )}
 
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: "0.88rem", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontFamily: "var(--font-secondary)", fontWeight: 600, fontSize: "0.95rem", color: "#fff", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {sw.name}
             </div>
             <span style={{
@@ -137,8 +142,8 @@ function SoftwareCard({ sw, onNavigate, isSpecAvailable }) {
     );
   }
 
-  const g = GRADE_INFO[sw.result.grade] || { emoji: "❓", label: "Data Belum Tersedia", color: "#94a3b8" };
-  const icons = { CPU: "🖥", RAM: "🧠", GPU: "🎴", Storage: "💾" };
+  const g = GRADE_INFO[sw.result.grade] || { emoji: "", label: "Data Belum Tersedia", color: "#94a3b8" };
+  const icons = { CPU: "CPU", RAM: "RAM", GPU: "GPU", Storage: "Disk" };
 
   return (
     <div
@@ -183,12 +188,22 @@ function SoftwareCard({ sw, onNavigate, isSpecAvailable }) {
             }}
           />
         ) : (
-          <span style={{ fontSize: "1.6rem", flexShrink: 0, width: 40, textAlign: "center" }}>{sw.icon || "🎮"}</span>
+          <div style={{
+            width: 40,
+            height: 54,
+            borderRadius: 6,
+            background: "var(--bg3)",
+            border: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0
+          }} />
         )}
 
         {/* Name & bar */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: "0.88rem", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontFamily: "var(--font-secondary)", fontWeight: 600, fontSize: "0.95rem", color: "#fff", marginBottom: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {sw.name}
           </div>
           <Bar pct={sw.result.totalScore} color={sw.result.color} />
@@ -244,7 +259,7 @@ function SoftwareCard({ sw, onNavigate, isSpecAvailable }) {
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <span style={{ fontSize: "0.7rem", color: sw.result.color, fontWeight: 600 }}>
-          {g.emoji} {g.label}
+          {g.label}
         </span>
         <span style={{ fontSize: "0.65rem", color: "var(--text3)", fontFamily: "var(--font-mono)" }}>
           Lihat detail →
@@ -255,20 +270,56 @@ function SoftwareCard({ sw, onNavigate, isSpecAvailable }) {
 }
 
 export default function Results() {
+  const alphabet = [
+    "!", "\"", "$", "'", "*", ".", "(", "#",
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+    ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
+  ];
   const [params, setParams] = useSearchParams();
   const nav = useNavigate();
   const [results, setResults] = useState([]);
   const [stats, setStats] = useState(null);
   const [summary, setSummary] = useState("");
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [specLoading, setSpecLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("Semua");
   const [gradeFilter, setGradeFilter] = useState("Semua");
+  const [onlyRunnable, setOnlyRunnable] = useState(false);
+  
+  // Pagination & Alphabet Index states
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [selectedLetter, setSelectedLetter] = useState("A");
+
   const [aiLoading, setAiLoading] = useState(false);
   const [specSaved, setSpecSaved] = useState(false);
   const [popularRunnable, setPopularRunnable] = useState([]);
+
+  // Change handlers to reset page and balance search vs letter prefix
+  const handleSearchChange = (val) => {
+    setSearchQuery(val);
+    if (val) {
+      setSelectedLetter("");
+    } else {
+      setSelectedLetter("A");
+    }
+    setPage(1);
+  };
+
+  const handleLetterSelect = (lettr) => {
+    setSelectedLetter(lettr);
+    setSearchQuery("");
+    setPage(1);
+  };
+
+  const handleRunnableToggle = () => {
+    setOnlyRunnable(prev => !prev);
+    setPage(1);
+  };
   const location = useLocation();
   const justSaved = location.state?.justSaved || false;
   const [gameCount, setGameCount] = useState(null);
@@ -323,8 +374,8 @@ export default function Results() {
         }
       }
 
-      // 2. Fallback ke localStorage
-      if (!savedSpec) {
+      // 2. Fallback ke localStorage (hanya jika login)
+      if (!savedSpec && userStr) {
         try {
           const localSpec = localStorage.getItem("user_spec");
           if (localSpec) {
@@ -381,13 +432,25 @@ export default function Results() {
         const res = await fetch(`${API}/api/analyze`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...spec, q: searchQuery }),
+          body: JSON.stringify({ 
+            ...spec, 
+            q: searchQuery, 
+            page, 
+            limit: 30, 
+            letter: selectedLetter, 
+            onlyRunnable 
+          }),
         });
         if (!res.ok) throw new Error("API error");
         const data = await res.json();
         setResults(data.results);
         setStats(data.stats);
         setPopularRunnable(data.popularRunnable || []);
+        if (data.pagination) {
+          setTotalPages(data.pagination.total_pages);
+          setTotalItems(data.pagination.total_items);
+        }
+        setError(null);
         setLoading(false);
         setIsSearching(false);
         if (spec.cpu > 0) {
@@ -396,40 +459,29 @@ export default function Results() {
           setSummary("");
         }
       } catch (err) {
-        console.error("Gagal load analisis dari API, fallback ke local", err);
-        // Fallback jika API bermasalah
-        const localResults = analyzeSoftware(spec, softwareList);
-        const localPopular = localResults.filter((r) => r.result.totalScore >= 50).slice(0, 10);
-        const filtered = searchQuery
-          ? localResults.filter((r) =>
-              r.name.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-          : localResults.slice(0, 12);
-        const localStats = calculateStats(filtered);
-        setResults(filtered);
-        setStats(localStats);
-        setPopularRunnable(localPopular);
+        console.error("Gagal load analisis dari API:", err);
+        setError("Maaf, fitur ini sedang dalam perbaikan atau tidak dapat diakses saat ini. Silakan coba beberapa saat lagi. (Sorry, this feature is currently down or under maintenance.)");
+        setResults([]);
+        setStats(null);
+        setPopularRunnable([]);
+        setTotalPages(1);
+        setTotalItems(0);
         setLoading(false);
         setIsSearching(false);
-        if (spec.cpu > 0) {
-          fetchAI(localStats, filtered);
-        } else {
-          setSummary("");
-        }
+        setSummary("");
       }
     };
 
     // Simpan spesifikasi ke localStorage & DB jika user terlogin dan spec valid (hanya dijalankan sekali pada inisialisasi)
     if (loading && spec.cpu > 0) {
       const saveSpec = async () => {
-        try {
-          localStorage.setItem("user_spec", JSON.stringify(spec));
-        } catch (err) {
-          console.error("Gagal menyimpan ke localStorage:", err);
-        }
-
         const user = JSON.parse(localStorage.getItem("user") || "null");
         if (user) {
+          try {
+            localStorage.setItem("user_spec", JSON.stringify(spec));
+          } catch (err) {
+            console.error("Gagal menyimpan ke localStorage:", err);
+          }
           try {
             const saveRes = await fetch(`${API}/api/user/spec`, {
               method: "POST",
@@ -461,7 +513,7 @@ export default function Results() {
     }, searchQuery ? 500 : 0);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery, spec.cpu, specLoading]);
+  }, [searchQuery, spec.cpu, specLoading, page, selectedLetter, onlyRunnable]);
 
   const fetchAI = async (st, activeResults) => {
     setAiLoading(true);
@@ -481,11 +533,7 @@ export default function Results() {
     setAiLoading(false);
   };
 
-  const filtered = results.filter((r) => {
-    const catOk = filter === "Semua" || r.cat === filter;
-    const gradeOk = gradeFilter === "Semua" || r.result.grade === gradeFilter;
-    return catOk && gradeOk;
-  });
+  const filtered = results;
 
   if (loading || specLoading)
     return (
@@ -506,7 +554,7 @@ export default function Results() {
             animation: "pulse 1s infinite",
           }}
         >
-          ⚙ Menganalisis...
+          Menganalisis...
         </div>
       </div>
     );
@@ -532,7 +580,7 @@ export default function Results() {
           animation: 'fadeUp 0.3s ease',
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
         }}>
-          ✅ Spek tersimpan ke akun Anda
+          Spek tersimpan ke akun Anda
         </div>
       )}
 
@@ -547,7 +595,7 @@ export default function Results() {
           flexWrap: 'wrap', gap: 8,
         }}>
           <span style={{ color: 'var(--text2)', fontSize: '0.85rem' }}>
-            💡 Masuk untuk menyimpan spek ini agar tidak perlu input ulang
+            Masuk untuk menyimpan spek PC mu agar tidak perlu input ulang
           </span>
           <button
             onClick={() => nav('/login')}
@@ -572,19 +620,16 @@ export default function Results() {
         <div style={{ marginBottom: "2.5rem" }}>
           <h1
             style={{
-              fontWeight: 800,
-              fontSize: "1.8rem",
-              letterSpacing: "-0.02em",
-              marginBottom: 4,
+              fontFamily: "var(--font-primary)",
+              fontWeight: 700,
+              fontSize: "2.2rem",
+              letterSpacing: "0.02em",
+              marginBottom: 6,
             }}
           >
             Hasil <span style={{ color: "var(--accent)" }}>Analisis</span>
           </h1>
-          {gameCount !== null && (
-            <p style={{ color: "var(--text3)", fontSize: "0.82rem", marginBottom: 12 }}>
-              Membandingkan spesifikasi PC Anda dengan {gameCount.toLocaleString("id-ID")} game di database.
-            </p>
-          )}
+          
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {[
               { label: "CPU", val: spec.cpuName },
@@ -600,8 +645,8 @@ export default function Results() {
                   border: "1px solid var(--border)",
                   borderRadius: 6,
                   padding: "4px 12px",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.75rem",
+                  fontFamily: "var(--font-body)",
+                  fontSize: "0.8rem",
                   color: "var(--text2)",
                 }}
               >
@@ -614,19 +659,15 @@ export default function Results() {
         <div style={{ marginBottom: "2rem" }}>
           <h1
             style={{
-              fontWeight: 800,
-              fontSize: "1.8rem",
-              letterSpacing: "-0.02em",
-              marginBottom: 4,
+              fontFamily: "var(--font-primary)",
+              fontWeight: 700,
+              fontSize: "2.2rem",
+              letterSpacing: "0.02em",
+              marginBottom: 6,
             }}
           >
             Daftar <span style={{ color: "var(--accent)" }}>Game</span>
           </h1>
-          {gameCount !== null && (
-            <p style={{ color: "var(--text3)", fontSize: "0.82rem", marginBottom: 12 }}>
-              Menjelajahi {gameCount.toLocaleString("id-ID")} game di database.
-            </p>
-          )}
           
           {/* Test PC Banner */}
           <div style={{
@@ -641,22 +682,25 @@ export default function Results() {
             gap: '1rem',
           }}>
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent)', marginBottom: 4 }}>
-                ⚡ Cek Apakah PC Kamu Kuat?
+              <h3 style={{ fontFamily: 'var(--font-secondary)', fontSize: '1.1rem', fontWeight: 600, color: 'var(--accent)', marginBottom: 4 }}>
+                Cek Apakah PC Kamu Kuat?
               </h3>
-              <p style={{ color: 'var(--text2)', fontSize: '0.8rem' }}>
-                Bandingkan spesifikasi komputer Anda dengan database game kami untuk melihat grade performa secara instan.
+              <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text2)', fontSize: '0.85rem' }}>
+                Bandingkan spesifikasi komputer Anda dengan ribuan judul game di katalog kami untuk melihat grade performa secara instan.
               </p>
             </div>
             <button
               onClick={() => nav('/test-pc')}
               style={{
+                fontFamily: 'var(--font-primary)',
+                letterSpacing: '0.04em',
+                textTransform: 'uppercase',
                 background: 'var(--accent)',
                 color: '#000',
                 border: 'none',
                 fontWeight: 700,
-                fontSize: '0.8rem',
-                padding: '9px 18px',
+                fontSize: '0.82rem',
+                padding: '10px 20px',
                 borderRadius: 6,
                 cursor: 'pointer',
               }}
@@ -686,7 +730,7 @@ export default function Results() {
               color: "var(--accent)",
               animation: "pulse 1s infinite"
             }}>
-              ⚡ Sedang mencari...
+              Sedang mencari...
             </span>
           )}
         </div>
@@ -695,7 +739,7 @@ export default function Results() {
             type="text"
             placeholder="Ketik judul game di sini... (contoh: Cyberpunk, GTA, Valorant)"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             style={{
               width: "100%",
               padding: "14px 18px",
@@ -719,7 +763,7 @@ export default function Results() {
           />
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery("")}
+              onClick={() => handleSearchChange("")}
               style={{
                 position: "absolute",
                 right: 14,
@@ -743,6 +787,135 @@ export default function Results() {
         </div>
       </div>
 
+      {/* Filter Options */}
+      {isSpecAvailable && (
+        <div style={{
+          display: "flex",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: "1rem",
+          marginBottom: "1.5rem",
+          flexWrap: "wrap"
+        }}>
+          <button
+            onClick={handleRunnableToggle}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              background: onlyRunnable ? "rgba(0, 212, 255, 0.08)" : "var(--bg2)",
+              border: `1px solid ${onlyRunnable ? "var(--accent)" : "var(--border)"}`,
+              borderRadius: 8,
+              padding: "8px 14px",
+              color: onlyRunnable ? "var(--accent)" : "var(--text2)",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <span style={{
+              width: 12,
+              height: 12,
+              borderRadius: 3,
+              border: `1.5px solid ${onlyRunnable ? "var(--accent)" : "var(--text3)"}`,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: onlyRunnable ? "var(--accent)" : "transparent",
+              transition: "all 0.2s ease"
+            }}>
+              {onlyRunnable && <span style={{ color: "#000", fontSize: "0.6rem", fontWeight: 900, lineHeight: 1 }}>✓</span>}
+            </span>
+            Hanya Game Yang Kuat di PC-ku
+          </button>
+        </div>
+      )}
+
+      {/* Alphabetical Index Filter */}
+      <div style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: "6px",
+        marginBottom: "2rem",
+        background: "rgba(255, 255, 255, 0.02)",
+        border: "1px solid var(--border)",
+        borderRadius: "12px",
+        padding: "12px",
+        justifyContent: "center",
+        alignItems: "center"
+      }}>
+        {alphabet.map((lettr) => {
+          const isActive = selectedLetter === lettr;
+          return (
+            <button
+              key={lettr}
+              onClick={() => handleLetterSelect(lettr)}
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "8px",
+                border: "1px solid " + (isActive ? "var(--accent)" : "transparent"),
+                background: isActive ? "rgba(0, 212, 255, 0.08)" : "transparent",
+                color: isActive ? "var(--accent)" : "var(--text2)",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.color = "var(--accent)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.color = "var(--text2)";
+                  e.currentTarget.style.background = "transparent";
+                }
+              }}
+            >
+              {lettr}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Search / Filter Status */}
+      <div style={{
+        marginBottom: "1.5rem",
+        fontSize: "0.85rem",
+        color: "var(--text2)",
+        fontFamily: "var(--font-mono)",
+      }}>
+        {searchQuery ? (
+          <>Ditemukan <span style={{ color: "var(--accent)", fontWeight: 700 }}>{totalItems}</span> game untuk pencarian "{searchQuery}"</>
+        ) : selectedLetter ? (
+          <>Menampilkan <span style={{ color: "var(--accent)", fontWeight: 700 }}>{totalItems}</span> game berawalan "{selectedLetter}"</>
+        ) : (
+          <>Menampilkan <span style={{ color: "var(--accent)", fontWeight: 700 }}>{totalItems}</span> game</>
+        )}
+      </div>
+
+      {error && (
+        <div style={{
+          background: "rgba(239, 68, 68, 0.08)",
+          border: "1px solid rgba(239, 68, 68, 0.3)",
+          borderRadius: "12px",
+          padding: "1.5rem",
+          marginBottom: "2rem",
+          color: "#f87171",
+          textAlign: "center",
+          fontFamily: "var(--font-display)",
+          fontWeight: 600
+        }}>
+          {error}
+        </div>
+      )}
 
       {/* Results Grid */}
       <div
@@ -779,6 +952,124 @@ export default function Results() {
           }}
         >
           Tidak ada software untuk filter ini.
+        </div>
+      )}
+
+      {/* Pagination Footer */}
+      {totalPages > 1 && (
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "1.5rem",
+          marginTop: "3rem",
+          marginBottom: "1rem"
+        }}>
+          <button
+            disabled={page === 1}
+            onClick={() => {
+              setPage(p => Math.max(1, p - 1));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "1px solid var(--border)",
+              background: page === 1 ? "transparent" : "var(--bg2)",
+              color: page === 1 ? "var(--text3)" : "var(--text)",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              cursor: page === 1 ? "not-allowed" : "pointer",
+              transition: "all 0.15s ease",
+              opacity: page === 1 ? 0.4 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (page !== 1) {
+                e.currentTarget.style.borderColor = "var(--accent)";
+                e.currentTarget.style.color = "var(--accent)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (page !== 1) {
+                e.currentTarget.style.borderColor = "var(--border)";
+                e.currentTarget.style.color = "var(--text)";
+              }
+            }}
+          >
+            ← Sebelumnya
+          </button>
+          
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.9rem",
+            color: "var(--text2)"
+          }}>
+            Halaman
+            <select
+              value={page}
+              onChange={(e) => {
+                const targetPage = Number(e.target.value);
+                setPage(targetPage);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              style={{
+                background: "var(--bg3)",
+                border: "1px solid var(--border)",
+                color: "var(--accent)",
+                borderRadius: "6px",
+                padding: "4px 8px",
+                fontSize: "0.9rem",
+                fontWeight: 700,
+                width: "auto",
+                cursor: "pointer",
+                textAlign: "center"
+              }}
+            >
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <option key={pageNum} value={pageNum}>
+                  {pageNum}
+                </option>
+              ))}
+            </select>
+            dari <span style={{ color: "var(--text)", fontWeight: 700 }}>{totalPages}</span>
+          </div>
+          
+          <button
+            disabled={page === totalPages}
+            onClick={() => {
+              setPage(p => Math.min(totalPages, p + 1));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            style={{
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "1px solid var(--border)",
+              background: page === totalPages ? "transparent" : "var(--bg2)",
+              color: page === totalPages ? "var(--text3)" : "var(--text)",
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              cursor: page === totalPages ? "not-allowed" : "pointer",
+              transition: "all 0.15s ease",
+              opacity: page === totalPages ? 0.4 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (page !== totalPages) {
+                e.currentTarget.style.borderColor = "var(--accent)";
+                e.currentTarget.style.color = "var(--accent)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (page !== totalPages) {
+                e.currentTarget.style.borderColor = "var(--border)";
+                e.currentTarget.style.color = "var(--text)";
+              }
+            }}
+          >
+            Selanjutnya →
+          </button>
         </div>
       )}
 
