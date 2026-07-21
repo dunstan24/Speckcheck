@@ -48,6 +48,7 @@ detector/dist/
 detector/build/
 detector/*.spec
 detector/*.exe
+!detector/SpecCheck_Detect.exe
 
 # ─── Docker / DB ─────────────────────────────────────────────────────────────
 .docker-sync.log
