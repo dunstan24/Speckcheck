@@ -133,11 +133,11 @@ def get_db_connection():
     for attempt in range(10):
         try:
             return mysql.connector.connect(
-                host=os.environ.get("DB_HOST", "localhost"),
+                host=os.environ.get("DB_HOST", "db"),
                 port=int(os.environ.get("DB_PORT", 3306)),
                 database=os.environ.get("DB_NAME", "speccheck"),
                 user=os.environ.get("DB_USER", "speccheck"),
-                password=os.environ.get("DB_PASSWORD", ""),
+                password=os.environ.get("DB_PASSWORD", "Sp3cCh3ck@Db#2026!xK9mPqR7"),
                 charset="utf8mb4",
                 use_unicode=True,
                 collation="utf8mb4_unicode_ci"

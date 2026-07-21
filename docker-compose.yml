@@ -35,6 +35,11 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
+    environment:
+      - DB_HOST=db
+      - DB_USER=${DB_USER:-speccheck}
+      - DB_PASSWORD=${DB_PASSWORD:-Sp3cCh3ck@Db#2026!xK9mPqR7}
+      - DB_NAME=${DB_NAME:-speccheck}
     env_file:
       - path: ./backend/.env
         required: false
