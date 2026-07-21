@@ -7,7 +7,8 @@ services:
     restart: unless-stopped
     command: --performance_schema=OFF --innodb_buffer_pool_size=128M --max_connections=50
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-R00t@M4sT3r#2026!zX9wLpN}
       MYSQL_DATABASE: ${DB_NAME:-speccheck}
@@ -35,7 +36,8 @@ services:
     ports:
       - "5000:5000"
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
     depends_on:
       db:
         condition: service_healthy   # tunggu MySQL benar-benar siap
