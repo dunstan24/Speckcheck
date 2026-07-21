@@ -3,7 +3,7 @@ import os, time, secrets, smtplib, random, string
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests as req_lib
-from hardware_matcher import match_cpu, match_gpu, resolve_game_requirement, get_cpus, get_gpus, mhz_to_score, extract_vram_from_name
+from hardware_matcher import match_cpu, match_gpu, resolve_game_requirement, get_cpus, get_gpus, mhz_to_score, vram_to_score, extract_vram_from_name
 import mysql.connector
 import google.generativeai as genai
 from flask import Flask, jsonify, request, send_file, Response
