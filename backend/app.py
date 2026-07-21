@@ -1961,79 +1961,105 @@ def get_hardware():
 @app.route("/api/analyze", methods=["POST"])
 @limiter.limit("20 per minute")
 def analyze():
-    data = request.json or {}
-    spec = {
-        "cpu":     int(data.get("cpu", 0)),
-        "ram":     int(data.get("ram", 0)),
-        "vram":    float(data.get("vram", 0)),
-        "disk":    int(data.get("disk", 0)),
-        "cpuName": str(data.get("cpuName", ""))[:100].strip(),
-        "gpuName": str(data.get("gpuName", ""))[:100].strip(),
-    }
-    search_query = str(data.get("q", ""))[:100].strip()
-    
-    page = max(1, int(data.get("page", 1)))
-    limit = max(1, min(100, int(data.get("limit", 30))))
-    letter = data.get("letter", None)
-    if letter:
-        letter = str(letter).strip()
-        if not letter or len(letter) > 1:
-            letter = None
-
-    # Default to 'A' if browsing with empty query and empty letter to prevent huge dataset load
-    if not search_query and not letter:
-        letter = "A"
-
-    only_runnable = bool(data.get("onlyRunnable", False))
-
-    # Resolve user CPU/GPU SEKALI untuk semua game (bukan per-game)
-    cpu_score, _ = match_cpu(spec["cpuName"], spec["cpu"])
-    gpu_score, _ = match_gpu(spec["gpuName"], spec["vram"])
-
-    # Fetch matching software list
-    software_db = fetch_software_paginated(search_query, letter)
-    
-    # Calculate compat grades
-    analyzed = [{**sw, "result": analyze_one(spec, sw, cpu_score, gpu_score)} for sw in software_db]
-    
-    # Filter only runnable if requested
-    if only_runnable and spec["cpu"] > 0:
-        analyzed = [r for r in analyzed if r["result"]["grade"] in ["S", "A", "B", "C"]]
-        
-    total_items = len(analyzed)
-    
-    # Paginate analyzed list in Python
-    offset = (page - 1) * limit
-    paginated_results = analyzed[offset : offset + limit]
-    
-    import math
-    total_pages = math.ceil(total_items / limit) if total_items > 0 else 0
-    
-    stats = {
-        "canRun":  sum(1 for r in analyzed if r["result"]["totalScore"] >= 50),
-        "optimal": sum(1 for r in analyzed if r["result"]["totalScore"] >= 90),
-        "cantRun": sum(1 for r in analyzed if r["result"]["totalScore"] < 25),
-        "gamesOk": sum(1 for r in analyzed if r["cat"] == "Game" and r["result"]["totalScore"] >= 70),
-        "total":   total_items,
-    }
-
-    # Dapatkan 10 game populer yang bisa dijalankan komputernya
-    popular_db = fetch_popular_games()
-    popular_analyzed = [{**sw, "result": analyze_one(spec, sw, cpu_score, gpu_score)} for sw in popular_db]
-    popular_runnable = [r for r in popular_analyzed if r["result"]["totalScore"] >= 50]
-    popular_runnable = popular_runnable[:10]
-
-    return jsonify({
-        "results": paginated_results, 
-        "stats": stats, 
-        "popularRunnable": popular_runnable,
-        "pagination": {
-            "page": page,
-            "limit": limit,
-            "total_items": total_items,
-            "total_pages": total_pages
+    try:
+        data = request.json or {}
+        spec = {
+            "cpu":     int(data.get("cpu", 0) or 0),
+            "ram":     int(data.get("ram", 0) or 0),
+            "vram":    float(data.get("vram", 0) or 0),
+            "disk":    int(data.get("disk", 0) or 0),
+            "cpuName": str(data.get("cpuName", "") or "")[:100].strip(),
+            "gpuName": str(data.get("gpuName", "") or "")[:100].strip(),
         }
-    })
+        search_query = str(data.get("q", "") or "")[:100].strip()
+        
+        page = max(1, int(data.get("page", 1) or 1))
+        limit = max(1, min(100, int(data.get("limit", 30) or 30)))
+        letter = data.get("letter", None)
+        if letter:
+            letter = str(letter).strip()
+            if not letter or len(letter) > 1:
+                letter = None
+
+        # Default to 'A' if browsing with empty query and empty letter to prevent huge dataset load
+        if not search_query and not letter:
+            letter = "A"
+
+        only_runnable = bool(data.get("onlyRunnable", False))
+
+        # Resolve user CPU/GPU SEKALI untuk semua game (bukan per-game)
+        try:
+            cpu_score, _ = match_cpu(spec["cpuName"], spec["cpu"])
+            gpu_score, _ = match_gpu(spec["gpuName"], spec["vram"])
+        except Exception as e:
+            app.logger.error(f"[analyze] match_cpu/gpu error: {e}")
+            cpu_score, gpu_score = 0, 0
+
+        # Fetch matching software list
+        software_db = fetch_software_paginated(search_query, letter)
+        
+        # Calculate compat grades — per-game fail-safe
+        analyzed = []
+        for sw in software_db:
+            try:
+                result = analyze_one(spec, sw, cpu_score, gpu_score)
+                analyzed.append({**sw, "result": result})
+            except Exception as e:
+                app.logger.error(f"[analyze] analyze_one failed for game {sw.get('id')}: {e}")
+                # Skip this game rather than crashing the whole request
+                continue
+        
+        # Filter only runnable if requested
+        if only_runnable and spec["cpu"] > 0:
+            analyzed = [r for r in analyzed if r["result"]["grade"] in ["S", "A", "B", "C"]]
+            
+        total_items = len(analyzed)
+        
+        # Paginate analyzed list in Python
+        offset = (page - 1) * limit
+        paginated_results = analyzed[offset : offset + limit]
+        
+        import math
+        total_pages = math.ceil(total_items / limit) if total_items > 0 else 0
+        
+        stats = {
+            "canRun":  sum(1 for r in analyzed if r["result"]["totalScore"] >= 50),
+            "optimal": sum(1 for r in analyzed if r["result"]["totalScore"] >= 90),
+            "cantRun": sum(1 for r in analyzed if r["result"]["totalScore"] < 25),
+            "gamesOk": sum(1 for r in analyzed if r["cat"] == "Game" and r["result"]["totalScore"] >= 70),
+            "total":   total_items,
+        }
+
+        # Dapatkan 10 game populer yang bisa dijalankan komputernya
+        popular_analyzed = []
+        try:
+            popular_db = fetch_popular_games()
+            for sw in popular_db:
+                try:
+                    result = analyze_one(spec, sw, cpu_score, gpu_score)
+                    popular_analyzed.append({**sw, "result": result})
+                except Exception:
+                    continue
+        except Exception as e:
+            app.logger.error(f"[analyze] fetch_popular_games error: {e}")
+
+        popular_runnable = [r for r in popular_analyzed if r["result"]["totalScore"] >= 50]
+        popular_runnable = popular_runnable[:10]
+
+        return jsonify({
+            "results": paginated_results, 
+            "stats": stats, 
+            "popularRunnable": popular_runnable,
+            "pagination": {
+                "page": page,
+                "limit": limit,
+                "total_items": total_items,
+                "total_pages": total_pages
+            }
+        })
+    except Exception as e:
+        app.logger.error(f"[analyze] Unhandled error: {e}", exc_info=True)
+        return jsonify({"error": "Terjadi kesalahan pada server. Silakan coba lagi."}), 500
 
 @app.route("/api/image-proxy")
 def image_proxy():
