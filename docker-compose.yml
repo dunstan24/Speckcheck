@@ -41,6 +41,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-Sp3cCh3ck@Db#2026!xK9mPqR7}
       - DB_NAME=${DB_NAME:-speccheck}
       - FRONTEND_URL=https://bisamainnggak.com
+      - GOOGLE_CLIENT_ID=1056267161459-k6j40ujc155euhhbi2hh7clvri1rvem.apps.googleusercontent.com
     env_file:
       - path: ./backend/.env
         required: false
@@ -61,6 +62,7 @@ services:
     restart: unless-stopped
     environment:
       - VITE_API_URL=https://api.bisamainnggak.com
+      - VITE_GOOGLE_CLIENT_ID=1056267161459-k6j40ujc155euhhbi2hh7clvri1rvem.apps.googleusercontent.com
     command: sh -c "chmod -R +x /app/node_modules/.bin 2>/dev/null; npx vite --host 0.0.0.0 --port 5173"
     ports:
       - "80:5173"

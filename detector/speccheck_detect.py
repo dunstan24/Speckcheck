@@ -190,7 +190,7 @@ def main():
         "diskFree": disk_gb,
         "os":      os_name,
     })
-    url = f"http://localhost:5173/results?{params}"
+    url = f"https://bisamainnggak.com/results?{params}"
     print(f"\n  Membuka: {url}\n")
     webbrowser.open(url)
     input("  Tekan Enter untuk keluar...")
