@@ -47,7 +47,7 @@ echo  [3/4] Build SpecCheck_Detect.exe (1-3 menit)...
 echo.
 python -m PyInstaller ^
     --onefile ^
-    --console ^
+    --noconsole ^
     --name "SpecCheck_Detect" ^
     --clean ^
     --noconfirm ^

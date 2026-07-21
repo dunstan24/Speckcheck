@@ -164,20 +164,12 @@ def get_os_name():
     return f"{platform.system()} {platform.release()}"
 
 def main():
-    print("\n  SpecCheck.AI — Mendeteksi Spesifikasi PC...\n")
-
     cpu_mhz  = get_cpu_mhz()
     cpu_name = get_cpu_name()
     ram_gb   = get_ram_gb()
     vram_gb, gpu_name = get_gpu_vram()
     disk_gb  = get_disk_gb()
     os_name  = get_os_name()
-
-    print(f"  CPU  : {cpu_name} ({cpu_mhz} MHz)")
-    print(f"  RAM  : {ram_gb} GB")
-    print(f"  GPU  : {gpu_name} ({vram_gb} GB VRAM)")
-    print(f"  Disk : {disk_gb} GB tersedia")
-    print(f"  OS   : {os_name}")
 
     params = urllib.parse.urlencode({
         "cpu":     cpu_mhz,
@@ -191,9 +183,23 @@ def main():
         "os":      os_name,
     })
     url = f"https://bisamainnggak.com/results?{params}"
-    print(f"\n  Membuka: {url}\n")
+    
+    # Tampilkan Dialog GUI agar terasa aman dan premium
+    try:
+        import ctypes
+        msg = (
+            f"Spesifikasi PC Anda Berhasil Dideteksi!\n\n"
+            f"• CPU: {cpu_name}\n"
+            f"• RAM: {ram_gb} GB\n"
+            f"• GPU: {gpu_name} ({vram_gb} GB VRAM)\n"
+            f"• Storage: {disk_gb} GB tersedia\n\n"
+            f"Klik OK untuk membuka hasil analisis di browser."
+        )
+        ctypes.windll.user32.MessageBoxW(0, msg, "Bisa Main Nggak Ya - Detektor Spesifikasi", 0x40)
+    except Exception:
+        pass
+
     webbrowser.open(url)
-    input("  Tekan Enter untuk keluar...")
 
 if __name__ == "__main__":
     main()
