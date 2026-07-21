@@ -358,16 +358,14 @@ export default function Results() {
             headers: { 'Authorization': String(user.token || '') }
           });
           if (res.status === 401) {
-            localStorage.removeItem("user");
-            localStorage.removeItem("user_spec");
-            window.dispatchEvent(new Event("authChange"));
-            nav("/login");
-            return;
-          }
-          const data = await res.json();
-          if (data.spec) {
-            savedSpec = data.spec;
-            localStorage.setItem("user_spec", JSON.stringify(data.spec));
+            // Token expired atau tidak valid untuk spec sync — biarkan user tetap login secara lokal
+            console.warn("Spec sync 401: token invalid, skip server spec fetch");
+          } else {
+            const data = await res.json();
+            if (data.spec) {
+              savedSpec = data.spec;
+              localStorage.setItem("user_spec", JSON.stringify(data.spec));
+            }
           }
         } catch (err) {
           console.error("Gagal fetch spec dari DB:", err);
@@ -492,10 +490,7 @@ export default function Results() {
               body: JSON.stringify(spec),
             });
             if (saveRes.status === 401) {
-              // Token diinvalidasi — force logout
-              localStorage.removeItem("user");
-              localStorage.removeItem("user_spec");
-              window.dispatchEvent(new Event("authChange"));
+              console.warn("Save spec 401: skip server save");
             } else if (saveRes.ok && justSaved) {
               setSpecSaved(true);
               setTimeout(() => setSpecSaved(false), 3000);

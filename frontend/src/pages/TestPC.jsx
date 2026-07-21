@@ -89,16 +89,14 @@ export default function TestPC() {
             headers: { 'Authorization': String(u.token || '') }
           })
           if (res.status === 401) {
-            localStorage.removeItem('user')
-            localStorage.removeItem('user_spec')
-            window.dispatchEvent(new Event('authChange'))
-            return
-          }
-          const data = await res.json()
-          if (data.spec) {
-            localStorage.setItem('user_spec', JSON.stringify(data.spec))
-            setSavedSpec(data.spec)
-            return
+            console.warn("Spec fetch 401: skip server spec fetch");
+          } else {
+            const data = await res.json()
+            if (data.spec) {
+              localStorage.setItem('user_spec', JSON.stringify(data.spec))
+              setSavedSpec(data.spec)
+              return
+            }
           }
         } catch (err) {
           console.error('Failed to fetch spec from DB:', err)
