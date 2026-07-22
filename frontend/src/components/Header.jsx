@@ -38,7 +38,19 @@ export default function Header() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         height: 56,
       }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <img 
+            src="/logo.png" 
+            alt="Bisa main nggak logo" 
+            style={{ 
+              width: 34, 
+              height: 34, 
+              borderRadius: 8,
+              objectFit: 'cover',
+              border: '1px solid rgba(0, 212, 255, 0.35)',
+              boxShadow: '0 0 12px rgba(0, 212, 255, 0.25)'
+            }} 
+          />
           <span style={{
             fontFamily: 'var(--font-primary)',
             fontWeight: 700,
