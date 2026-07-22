@@ -19,7 +19,12 @@ export function tokenize(s) {
 
 export function extractNumbers(s) {
   if (!s) return new Set()
-  const clean = s.replace(/\(r\)|\(tm\)|[®™\(\),\._\.]/gi, '')
+  const clean = s
+    .replace(/\(r\)|\(tm\)|[®™\(\),\._\.]/gi, '')
+    .replace(/@\s*\d+(?:\.\d+)?\s*(?:ghz|mhz)/gi, '')
+    .replace(/\b\d+(?:\.\d+)?\s*(?:ghz|mhz)\b/gi, '')
+    .replace(/\b\d+\s*(?:gb|mb)\s*(?:vram|of vram)?\b/gi, '')
+    .replace(/\b\d+(?:st|nd|rd|th)\b/gi, '')
   const matches = clean.toLowerCase().match(/\d{2,}/g)
   return new Set(matches || [])
 }
@@ -59,6 +64,20 @@ export function matchCpu(nameStr, fallbackMhz = 0) {
   if (!nameStr || !nameStr.trim()) {
     return { score: mhzToScore(fallbackMhz), name: 'Unknown CPU', found: false }
   }
+
+  let resolvedMhz = fallbackMhz
+  if (resolvedMhz <= 0) {
+    const ghzMatch = nameStr.match(/(\d+(?:\.\d+)?)\s*ghz/i)
+    if (ghzMatch) {
+      resolvedMhz = Math.round(parseFloat(ghzMatch[1]) * 1000)
+    } else {
+      const mhzMatch = nameStr.match(/(\d+)\s*mhz/i)
+      if (mhzMatch) {
+        resolvedMhz = parseInt(mhzMatch[1], 10)
+      }
+    }
+  }
+
   const tokens = tokenize(nameStr)
   const queryNums = extractNumbers(nameStr)
   let best = null, bestScore = 0
@@ -76,7 +95,7 @@ export function matchCpu(nameStr, fallbackMhz = 0) {
   if (best && bestScore >= 0.3) {
     return { score: best.perf_score, name: best.name, found: true, data: best }
   }
-  return { score: mhzToScore(fallbackMhz), name: nameStr, found: false }
+  return { score: mhzToScore(resolvedMhz), name: nameStr, found: false }
 }
 
 export function extractVramFromName(nameStr) {

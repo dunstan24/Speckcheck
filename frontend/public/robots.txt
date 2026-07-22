@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Sitemaps for Google Search Console
+Sitemap: https://bisamainnggak.com/sitemap.xml
+Sitemap: https://api.bisamainnggak.com/sitemap.xml

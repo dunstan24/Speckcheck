@@ -583,7 +583,7 @@ def analyze_one(spec, sw, cpu_score, gpu_score):
             pct = (user / max(divisor, 1)) * 50
             status = "below"
             is_below_min = True
-            if label == "Storage" or user == 0:
+            if label in ["CPU", "GPU", "RAM"] and user == 0:
                 critical_failure = True
         total_score += score
         details.append({"label": label, "user": user, "min": mn, "rec": rec,
@@ -716,6 +716,40 @@ def analytics_trending():
         return jsonify({"error": "Terjadi kesalahan pada server. Silakan coba lagi."}), 500
 
 
+# ─── SEO Sitemap Endpoint ───────────────────────────────────────────────────
+@app.route("/sitemap.xml")
+def sitemap():
+    """Generate dynamic XML sitemap for SEO & Google Search Console."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id FROM software")
+        games = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        base_url = os.environ.get("FRONTEND_URL", "https://bisamainnggak.com").rstrip("/")
+
+        urls = [
+            f"<url><loc>{base_url}/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>",
+            f"<url><loc>{base_url}/test-pc</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>",
+            f"<url><loc>{base_url}/results</loc><changefreq>daily</changefreq><priority>0.9</priority></url>",
+            f"<url><loc>{base_url}/trending</loc><changefreq>daily</changefreq><priority>0.8</priority></url>",
+            f"<url><loc>{base_url}/hardware</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>",
+        ]
+
+        for g in games:
+            urls.append(f"<url><loc>{base_url}/game/{g['id']}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>")
+
+        xml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{"".join(urls)}
+</urlset>"""
+
+        return Response(xml_content, mimetype="application/xml")
+    except Exception as e:
+        app.logger.error(f"Error generating sitemap: {e}")
+        return jsonify({"error": "Failed to generate sitemap"}), 500
 
 
 # ─── Auth Routes ─────────────────────────────────────────────────────────────

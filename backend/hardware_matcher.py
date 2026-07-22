@@ -48,10 +48,14 @@ def _tokenize(s):
     return tokens.union(extra_tokens)
 
 def _extract_numbers(s):
-    """Find all numeric digits of length >= 2 in the string."""
+    """Find all numeric digits of length >= 2 in the string, excluding clock speeds, VRAM, and generation ordinals."""
     if not s:
         return set()
     s_clean = re.sub(r"\(r\)|\(tm\)|[®™\(\),\._\.]", "", s, flags=re.IGNORECASE)
+    s_clean = re.sub(r"@\s*\d+(?:\.\d+)?\s*(?:ghz|mhz)", "", s_clean, flags=re.IGNORECASE)
+    s_clean = re.sub(r"\b\d+(?:\.\d+)?\s*(?:ghz|mhz)\b", "", s_clean, flags=re.IGNORECASE)
+    s_clean = re.sub(r"\b\d+\s*(?:gb|mb)\s*(?:vram|of vram)?\b", "", s_clean, flags=re.IGNORECASE)
+    s_clean = re.sub(r"\b\d+(?:st|nd|rd|th)\b", "", s_clean, flags=re.IGNORECASE)
     return set(re.findall(r"\d{2,}", s_clean.lower()))
 
 def _score(query_tokens, candidate_name):
@@ -69,9 +73,19 @@ def match_cpu(name_str, fallback_mhz=0):
     if not name_str or name_str.strip() == "":
         return mhz_to_score(fallback_mhz), "Unknown CPU"
 
+    resolved_mhz = fallback_mhz
+    if resolved_mhz <= 0 and name_str:
+        ghz_match = re.search(r'(\d+(?:\.\d+)?)\s*ghz', name_str, flags=re.IGNORECASE)
+        if ghz_match:
+            resolved_mhz = int(float(ghz_match.group(1)) * 1000)
+        else:
+            mhz_match = re.search(r'(\d+)\s*mhz', name_str, flags=re.IGNORECASE)
+            if mhz_match:
+                resolved_mhz = int(mhz_match.group(1))
+
     cpus = get_cpus()
     if not cpus:
-        return mhz_to_score(fallback_mhz), name_str
+        return mhz_to_score(resolved_mhz), name_str
 
     tokens = _tokenize(name_str)
     query_nums = _extract_numbers(name_str)
@@ -92,7 +106,7 @@ def match_cpu(name_str, fallback_mhz=0):
     if best and best_score >= 0.3:
         return best["perf_score"], best["name"]
     # fallback: use MHz heuristic
-    return mhz_to_score(fallback_mhz), name_str
+    return mhz_to_score(resolved_mhz), name_str
 
 def extract_vram_from_name(name_str):
     if not name_str:

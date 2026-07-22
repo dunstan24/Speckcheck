@@ -66,7 +66,7 @@ export function analyzeOne(spec, sw) {
       const divisor = mn > 0 ? mn : rec
       pct = (user / Math.max(divisor, 1)) * 50
       isBelowMin = true
-      if (label === 'Storage' || user === 0) criticalFailure = true
+      if ((label === 'CPU' || label === 'GPU' || label === 'RAM') && user === 0) criticalFailure = true
     }
 
     totalScore += score
