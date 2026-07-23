@@ -26,6 +26,36 @@ FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://bisamainnggak.com")
 # Izinkan CORS untuk semua origin (termasuk https://bisamainnggak.com dan www.bisamainnggak.com)
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
+@app.before_request
+def handle_options_preflight():
+    if request.method == "OPTIONS":
+        origin = request.headers.get("Origin")
+        response = Response()
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        else:
+            response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = request.headers.get("Access-Control-Request-Headers", "Content-Type, Authorization, X-Requested-With")
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Max-Age"] = "86400"
+        return response, 200
+
+@app.after_request
+def add_cors_headers(response):
+    origin = request.headers.get("Origin")
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+    elif "Access-Control-Allow-Origin" not in response.headers:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+    if "Access-Control-Allow-Headers" not in response.headers:
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    if "Access-Control-Allow-Methods" not in response.headers:
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    return response
+
+
 # Rate Limiter (in-memory storage untuk single-instance)
 limiter = Limiter(get_remote_address, app=app, default_limits=[],
                   storage_uri="memory://")

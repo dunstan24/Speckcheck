@@ -13,6 +13,24 @@ const GRADE_DEFS = [
   { grade: 'D', label: 'Tidak Bisa', desc: 'Tidak memenuhi syarat minimum', color: '#ef4444', bg: 'rgba(239,68,68,0.06)' },
 ]
 
+const DEFAULT_FEATURED_GAMES = [
+  {
+    id: 1,
+    name: 'Grand Theft Auto V',
+    cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/271590/header.jpg'
+  },
+  {
+    id: 2,
+    name: 'Cyberpunk 2077',
+    cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1091500/header.jpg'
+  },
+  {
+    id: 3,
+    name: 'Elden Ring',
+    cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg'
+  }
+]
+
 export default function Home() {
   const nav = useNavigate()
   const [featuredGames, setFeaturedGames] = useState([])
@@ -25,19 +43,21 @@ export default function Home() {
         setLoadingFeatured(true)
         const res = await fetch(`${API}/api/software/featured`)
         const data = await res.json()
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && data.length > 0) {
           setFeaturedGames(data)
         } else {
-          setFeaturedGames([])
+          setFeaturedGames(DEFAULT_FEATURED_GAMES)
         }
       } catch (err) {
-        console.error('Failed to fetch featured games:', err)
+        console.error('Failed to fetch featured games, using fallback:', err)
+        setFeaturedGames(DEFAULT_FEATURED_GAMES)
       } finally {
         setLoadingFeatured(false)
       }
     }
     loadFeaturedGames()
   }, [])
+
 
   const sectionTitle = (text, sub) => (
     <div style={{ marginBottom: '1.5rem' }}>
@@ -319,7 +339,13 @@ export default function Home() {
                       src={`${API}/api/image-proxy?url=${encodeURIComponent(game.cover_image_url)}`} 
                       alt={game.name}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={e => { e.target.style.display = 'none' }}
+                      onError={e => {
+                        if (e.target.src !== game.cover_image_url) {
+                          e.target.src = game.cover_image_url
+                        } else {
+                          e.target.style.display = 'none'
+                        }
+                      }}
                     />
                   ) : null}
                   <div style={{
